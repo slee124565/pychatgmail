@@ -13,10 +13,11 @@ def main(args):
         if os.path.isfile(os.path.join('html', args.html_file)):
             target.append(os.path.join('html', args.html_file))
 
-    # check if no target file exist, process all files under html sub-directory
+    # check if no target file exist, process all files under html subdirectory
     if not target:
         for (_, _, filenames) in os.walk(os.path.join('.', 'html')):
-            target = filenames
+            target = [filename for filename in filenames if os.path.splitext(filename)[1] == '.html']
+            # pass
         # target = [file for (_, _, file) in os.walk(os.path.join('.', 'html'))]
 
     if not target:
@@ -49,6 +50,7 @@ def main(args):
         txt_file = os.path.join('html', f'{name}.txt')
         with open(txt_file, 'w') as fh:
             fh.write('\n'.join(lines))
+        print(f'convert {filename} to {txt_file}')
 
 
 if __name__ == '__main__':
