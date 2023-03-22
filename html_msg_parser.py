@@ -117,6 +117,7 @@ def main(args):
         # txt_file = os.path.join('html', f'{name}.txt')
         # with open(txt_file, 'w') as fh:
         #     fh.write('\n'.join(lines))
+        # print(f'convert {filename} to {txt_file}')
 
 
 if __name__ == '__main__':
