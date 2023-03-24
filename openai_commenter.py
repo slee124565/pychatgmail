@@ -123,3 +123,4 @@ if __name__ == "__main__":
                 writer.writeheader()  # file doesn't exist yet, write a header
             writer.writerows([output_dict])
 
+        os.rename(to_be_comment, to_be_comment + '.commented')
