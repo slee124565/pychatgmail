@@ -61,17 +61,23 @@ if __name__ == "__main__":
     # print(job_condition)
 
     # load candidate json files
-    to_be_comments = []
+    targets = []
     for (dirpath, dirnames, filenames) in os.walk(os.path.join('.', 'html')):
-        to_be_comments = [os.path.join(dirpath, filename) for filename in filenames if filename.endswith('.json')]
+        targets = [os.path.join(dirpath, filename) for filename in filenames if filename.endswith('.json')]
         # print(to_be_comments)
 
-    if not to_be_comments:
+    if not targets:
         print(f'no new candidate')
         exit()
 #
-    for to_be_comment in to_be_comments:
-        with open(to_be_comment) as jsonFile:
+    for to_be_comment_file in targets:
+        comment_res_filename = os.path.splitext(os.path.basename(to_be_comment_file))[0] + '_comment.txt'
+        file_dir = os.path.dirname(to_be_comment_file)
+        comment_res_file = os.path.join(file_dir, comment_res_filename)
+        if os.path.exists(comment_res_file):
+            continue
+
+        with open(to_be_comment_file) as jsonFile:
             candidate_info = json.load(jsonFile)
 
         job_title = candidate_info['應徵職位']
@@ -107,6 +113,10 @@ if __name__ == "__main__":
         judge_comment = judge_bot.judge_comment(job_requirement, resume, comment_output)
         judge_score = judge_bot.judge_score(job_requirement, resume)
 
+        # output comment result
+        with open(comment_res_file, 'w', encoding='utf-8-sig') as f:
+            f.write(f"{judge_comment}\n\nScore: {judge_score}")
+
         output_csv = 'openai_comment.csv'
         file_exists = os.path.isfile(output_csv)
         output_dict = {
@@ -122,5 +132,3 @@ if __name__ == "__main__":
             if not file_exists:
                 writer.writeheader()  # file doesn't exist yet, write a header
             writer.writerows([output_dict])
-
-        os.rename(to_be_comment, to_be_comment + '.commented')
