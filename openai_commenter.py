@@ -26,7 +26,7 @@ class OpenaiRecruitJudgeBot:
     @staticmethod
     def judge_score(requirement: str, candidate_resume: str) -> float:
         output = """
-依照應徵者符合應徵條件，給出一個1~100的分數。只要數字就好。
+依照應徵者符合應徵條件，給出一個1~100的分數。只要給數字就好，不要任何文字。
 """
         messages = [
             {"role": "user", "content": requirement},
