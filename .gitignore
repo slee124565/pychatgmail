@@ -130,3 +130,5 @@ dmypy.json
 # ResumeChatBot
 credentials.json
 token.json
+html/
+openai_comment.csv
