@@ -30,6 +30,11 @@ def main(args):
         if not filename.endswith('.html'):
             continue
 
+        parsed_file = os.path.join('html', f'{os.path.splitext(filename)[0]}.json')
+        if os.path.exists(parsed_file):
+            continue
+        print(f'parse {filename}')
+
         parse_res = {
             'email_id': os.path.splitext(filename)[0]
         }
@@ -86,13 +91,12 @@ def main(args):
                                 parse_res[segment] += f'{td_txt}\n'
                     parse_res[segment] += '--------------------\n'
 
-        for k, v in parse_res.items():
+        # for k, v in parse_res.items():
             # print(repr(k))
             # print(repr(v))
-            print(k)
-            print(v)
+            # print(k)
+            # print(v)
 
-        parsed_file = os.path.join('html', f'{parse_res["email_id"]}.json')
         with open(parsed_file, 'w') as f:
             f.write(json.dumps(parse_res, ensure_ascii=False))
         # break
