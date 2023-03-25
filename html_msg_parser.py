@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from pprint import pprint
+from job_application_msg import JobApplicationMsg
 
 import bs4
 from lxml import etree
@@ -14,9 +14,9 @@ def main(args):
     # check if args.html_file target file exist
     if args.html_file:
         if os.path.isfile(os.path.join('html', args.html_file)):
-            target.append(os.path.join('html', args.html_file))
+            target.append(args.html_file)
 
-    # check if no target file exist, process all files under html sub-directory
+    # check if no target file exist, process all files under html subdirectory
     if not target:
         for (_, _, filenames) in os.walk(os.path.join('.', 'html')):
             target = filenames
@@ -31,9 +31,9 @@ def main(args):
             continue
 
         parsed_file = os.path.join('html', f'{os.path.splitext(filename)[0]}.json')
-        if os.path.exists(parsed_file):
-            continue
-        print(f'parse {filename}')
+        # if os.path.exists(parsed_file):
+        #     continue
+        # print(f'parse {filename}')
 
         parse_res = {
             'email_id': os.path.splitext(filename)[0]
@@ -96,9 +96,19 @@ def main(args):
             # print(repr(v))
             # print(k)
             # print(v)
-
+        candidate = JobApplicationMsg(
+                msg_id=parse_res.get('email_id'),
+                name=parse_res.get('姓名', ''),
+                applied_position=job,
+                education=parse_res.get('教育背景', ''),
+                work_experience=parse_res.get('工作經歷', ''),
+                skills=parse_res.get('技能專長', ''),
+                self_introduction=parse_res.get('自傳', ''),
+            )
         with open(parsed_file, 'w') as f:
-            f.write(json.dumps(parse_res, ensure_ascii=False))
+            # f.write(json.dumps(parse_res, ensure_ascii=False, indent=2))
+            f.write(json.dumps(candidate.__dict__, ensure_ascii=False, indent=2))
+        print(f'parse msg {candidate.msg_id}, {candidate.name}, {candidate.applied_position}, output {parsed_file}')
         # break
 
         # # Find all rows in the table
@@ -130,7 +140,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--html_file',
                         help='html file name under sub-directory ./html',
-                        default=None)
+                        default='None')
 
     args = parser.parse_args()
     main(args)
