@@ -65,7 +65,7 @@ def main(args):
 
             msg_subject = next((header['value'] for header in message.get('payload').get('headers') if
                                 header['name'] == 'Subject'), None)
-            if str(msg_subject).find(args.query_subject) != 0:
+            if not str(msg_subject).startswith(args.query_subject):
                 print(f'message subject not started with "{args.query_subject}", {msg_id}, {msg_subject}')
                 continue
 
@@ -100,7 +100,7 @@ if __name__ == '__main__':
                         default='INBOX')
     parser.add_argument('-s', '--query_subject',
                         help='gmail query subject match string',
-                        default='104應徵履歷')
+                        default='104應徵履歷【UI/UX')
     parser.add_argument('-d', '--query_after',
                         type=int,
                         help='gmail query after timedelta days',

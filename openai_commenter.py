@@ -1,6 +1,5 @@
 from job_application_msg import JobApplicationMsg
 import openai
-import json
 
 
 class OpenaiRecruitJudgeBot:
@@ -44,45 +43,6 @@ class OpenaiRecruitJudgeBot:
         return float(res_content)
 
 
-def main(args):
-    targets = []
-
-    # check if args.candidate_file target file exist
-    if args.candidate_file:
-        if os.path.isfile(os.path.join(args.src_dir, args.candidate_file)):
-            targets.append(args.candidate_file)
-
-    # check if no target file exist, process all files under html subdirectory
-    if not targets:
-        for (_, _, filenames) in os.walk(os.path.join('.', args.src_dir)):
-            targets = [file for file in filenames if file.endswith('.json')]
-        # target = [file for (_, _, file) in os.walk(os.path.join('.', 'html'))]
-
-    if not targets:
-        print(f'no html file exist to process')
-        return
-    else:
-        print(f'targets : {targets}')
-        pass
-
-    with open(args.prompt_file, 'r') as fh:
-        ai_prompt = fh.read().strip()
-
-    if not ai_prompt:
-        print(f'OpenAI prompt error: {ai_prompt}')
-        return
-
-    for to_be_comment_file in targets:
-        with open(os.path.join(args.src_dir, to_be_comment_file), 'r') as fh:
-            data = json.load(fh)
-        candidate = JobApplicationMsg(**data)
-        ai_prompt = f'{ai_prompt}\n{candidate.work_experience}\n{candidate.skills}'
-
-        # judge_bot = OpenaiRecruitJudgeBot(args.openai_key)
-        # judge_comment = judge_bot.judge_comment(job_requirement, resume, comment_output)
-        # judge_score = judge_bot.judge_score(job_requirement, resume)
-
-
 if __name__ == "__main__":
     import argparse
     import csv
@@ -91,13 +51,12 @@ if __name__ == "__main__":
     import dotenv
 
     dotenv.load_dotenv()
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-k', '--openai_key',
         help='openai api key',
-        # required=True,
-        default=os.getenv('OPENAI_KEY', None)
-    )
+        default=os.getenv('OPENAI_KEY'))
     parser.add_argument(
         '-p', '--prompt_file',
         help='openai prompt text content',
@@ -115,4 +74,84 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    main(args)
+    # load job conditions
+    job_condition = {}
+    with open('job_condition.csv', 'r') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            job_condition[row['job title']] = row['condition']
+    # print(job_condition)
+
+    # load candidate json files
+    targets = []
+    for (dirpath, dirnames, filenames) in os.walk(os.path.join('.', args.src_dir)):
+        targets = [os.path.join(dirpath, filename) for filename in filenames if filename.endswith('.json')]
+        # print(to_be_comments)
+
+    if not targets:
+        print(f'no new candidate')
+        exit()
+    #
+    for to_be_comment_file in targets:
+        comment_res_filename = os.path.splitext(os.path.basename(to_be_comment_file))[0] + '_comment.txt'
+        file_dir = os.path.dirname(to_be_comment_file)
+        comment_res_file = os.path.join(file_dir, comment_res_filename)
+        if os.path.exists(comment_res_file):
+            continue
+
+        with open(to_be_comment_file) as jsonFile:
+            candidate_info = json.load(jsonFile)
+
+        candidate = JobApplicationMsg(**candidate_info)
+        job_title = candidate_info['應徵職位']
+
+        # set job requirement
+        job_requirement = f"""
+你是一個專業的{job_title}，我會提供你應徵履歷資料，請判斷該名應徵者是否為合適的{job_title}。
+以下為應徵條件:
+{job_condition[job_title]}
+"""
+        # print(job_requirement)
+
+        # compose candidate resume
+        resume = f"""
+工作經歷：
+{candidate_info['工作經歷']}
+
+技能專長:
+{candidate_info['技能專長']}
+"""
+        # print(resume)
+        #
+
+        comment_output = f"""
+請把應徵條件是否符合做成表格，表格欄位要有<應徵條件>｜<符合/不符合/不確定>｜<原因>
+若有其他符合優秀的{job_title}條件則另外列點。
+若有其他需要顧慮的部分也另外列點。
+最後給出總結。
+"""
+
+        print(f"comment {candidate_info['email_id']}-{candidate_info['姓名']}")
+        judge_bot = OpenaiRecruitJudgeBot(args.openai_key)
+        judge_comment = judge_bot.judge_comment(job_requirement, resume, comment_output)
+        judge_score = judge_bot.judge_score(job_requirement, resume)
+
+        # output comment result
+        with open(comment_res_file, 'w', encoding='utf-8-sig') as f:
+            f.write(f"{judge_comment}\n\nScore: {judge_score}")
+
+        output_csv = 'openai_comment.csv'
+        file_exists = os.path.isfile(output_csv)
+        output_dict = {
+            'email_id': candidate_info['email_id'],
+            'candidate_name': candidate_info['姓名'],
+            'candidate_resume': resume,
+            'job_requirement': job_condition[job_title],
+            'openai_comment': judge_comment,
+            'openai_score': judge_score
+        }
+        with open(output_csv, 'a', encoding='utf-8-sig') as file:
+            writer = csv.DictWriter(file, fieldnames=output_dict.keys(), delimiter=',', lineterminator='\n')
+            if not file_exists:
+                writer.writeheader()  # file doesn't exist yet, write a header
+            writer.writerows([output_dict])
