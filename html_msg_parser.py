@@ -140,7 +140,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--html_file',
                         help='html file name under sub-directory ./html',
-                        default='None')
+                        default=None)
 
     args = parser.parse_args()
     main(args)

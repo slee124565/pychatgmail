@@ -7,3 +7,4 @@ openai
 pydantic
 pytz
 lxml
+python-dotenv
