@@ -131,4 +131,4 @@ dmypy.json
 credentials.json
 token.json
 html/
-openai_comment.csv
+openai_comment.csv.DS_Store

@@ -69,7 +69,12 @@ def main(args):
                 print(f'message subject not started with "{args.query_subject}", {msg_id}, {msg_subject}')
                 continue
 
-            msg_body = base64.urlsafe_b64decode(message.get('payload').get('body').get('data')).decode("utf-8")
+            data = message.get('payload').get('body').get('data')
+            if not data:
+                data = message.get('payload').get('parts')[0].get('parts')[0].get('body').get('data')
+            if not data:
+                continue
+            msg_body = base64.urlsafe_b64decode(data).decode("utf-8")
             html_file = os.path.join('html', f'{msg_id}.html')
             # html_file = f'{msg_id}-{msg_subject}.html'
             with open(html_file, 'w') as fh:
