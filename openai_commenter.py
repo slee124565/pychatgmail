@@ -25,8 +25,11 @@ def main(args):
         messages=messages,
         temperature=0.7,
     )
-    report = re.sub(r'\n\s*\n', '\n', response['choices'][0]['message']['content'])
-    print(report)
+    comment = re.sub(r'\n\s*\n', '\n', response['choices'][0]['message']['content'])
+    with open(os.path.join(args.src_dir, args.candidate_file), 'w') as fh:
+        resume.comment = comment
+        fh.write(json.dumps(resume.__dict__, indent=2, ensure_ascii=False))
+    print(f'{resume.msg_id}, {resume.name}, \n{resume.comment}\n')
 
 
 if __name__ == "__main__":
