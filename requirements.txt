@@ -8,3 +8,4 @@ pydantic
 pytz
 lxml
 python-dotenv
+tokenizers
