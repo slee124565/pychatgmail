@@ -13,24 +13,23 @@ def main(args):
     target = []
     # check if args.html_file target file exist
     if args.html_file:
-        if os.path.isfile(os.path.join('html', args.html_file)):
+        if os.path.isfile(os.path.join(args.out_dir, args.html_file)):
             target.append(args.html_file)
 
-    # check if no target file exist, process all files under html subdirectory
+    # check if no target file exist, process all files under {out_dir} subdirectory
     if not target:
-        for (_, _, filenames) in os.walk(os.path.join('.', 'html')):
+        for (_, _, filenames) in os.walk(os.path.join('.', args.out_dir)):
             target = filenames
-        # target = [file for (_, _, file) in os.walk(os.path.join('.', 'html'))]
 
     if not target:
-        print(f'no html file exist to process')
+        print(f'no {args.out_dir} file exist to process')
         return
 
     for filename in target:
         if not filename.endswith('.html'):
             continue
 
-        parsed_file = os.path.join('html', f'{os.path.splitext(filename)[0]}.json')
+        parsed_file = os.path.join(args.out_dir, f'{os.path.splitext(filename)[0]}.json')
         # if os.path.exists(parsed_file):
         #     continue
         # print(f'parse {filename}')
@@ -39,7 +38,7 @@ def main(args):
             'email_id': os.path.splitext(filename)[0]
         }
 
-        html_file = os.path.join('html', filename)
+        html_file = os.path.join(args.out_dir, filename)
         with open(html_file, 'r') as fh:
             soup = bs4.BeautifulSoup(fh.read(), 'html.parser')
 
@@ -92,46 +91,23 @@ def main(args):
                     parse_res[segment] += '--------------------\n'
 
         # for k, v in parse_res.items():
-            # print(repr(k))
-            # print(repr(v))
-            # print(k)
-            # print(v)
+        # print(repr(k))
+        # print(repr(v))
+        # print(k)
+        # print(v)
         candidate = JobApplicationMsg(
-                msg_id=parse_res.get('email_id'),
-                name=parse_res.get('姓名', ''),
-                applied_position=job,
-                education=parse_res.get('教育背景', ''),
-                work_experience=parse_res.get('工作經歷', ''),
-                skills=parse_res.get('技能專長', ''),
-                self_introduction=parse_res.get('自傳', ''),
-            )
+            msg_id=parse_res.get('email_id'),
+            name=parse_res.get('姓名', ''),
+            applied_position=job,
+            education=parse_res.get('教育背景', ''),
+            work_experience=parse_res.get('工作經歷', ''),
+            skills=parse_res.get('技能專長', ''),
+            self_introduction=parse_res.get('自傳', ''),
+        )
         with open(parsed_file, 'w') as f:
             # f.write(json.dumps(parse_res, ensure_ascii=False, indent=2))
             f.write(json.dumps(candidate.__dict__, ensure_ascii=False, indent=2))
         print(f'parse msg {candidate.msg_id}, {candidate.name}, {candidate.applied_position}, output {parsed_file}')
-        # break
-
-        # # Find all rows in the table
-        # rows = soup.find_all('tr')
-        #
-        # # Loop through each row and print its cells
-        # lines = []
-        # for row in rows:
-        #     heads = row.find_all('th')
-        #     cells = row.find_all('td')
-        #     line = '\t'.join(str(cell.text).strip() for cell in heads+cells).replace('\n', '')
-        #     if not line.strip():
-        #         continue
-        #     # print(line)
-        #     lines.append(line)
-        #     pass
-        #
-        # # Save html parser result
-        # name, ext = os.path.splitext(filename)
-        # txt_file = os.path.join('html', f'{name}.txt')
-        # with open(txt_file, 'w') as fh:
-        #     fh.write('\n'.join(lines))
-        # print(f'convert {filename} to {txt_file}')
 
 
 if __name__ == '__main__':
@@ -139,8 +115,11 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--html_file',
-                        help='html file name under sub-directory ./html',
+                        help='html file name under sub-directory args.out_dir',
                         default=None)
+    parser.add_argument('-o', '--out_dir',
+                        help='output subdirectory name',
+                        default='output')
 
     args = parser.parse_args()
     main(args)

@@ -3,7 +3,6 @@ from __future__ import print_function
 import base64
 import os.path
 from datetime import date, timedelta
-from pprint import pprint
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -75,11 +74,10 @@ def main(args):
             if not data:
                 continue
             msg_body = base64.urlsafe_b64decode(data).decode("utf-8")
-            html_file = os.path.join('html', f'{msg_id}.html')
-            # html_file = f'{msg_id}-{msg_subject}.html'
-            with open(html_file, 'w') as fh:
+            output_file = os.path.join(args.out_dir, f'{args.query_subject}_{msg_id}.html'.replace('/', '_'))
+            with open(output_file, 'w') as fh:
                 fh.write(msg_body)
-            print([msg_id, msg_subject, html_file])
+            print([msg_id, msg_subject, output_file])
 
     except HttpError as error:
         # TODO(developer) - Handle errors from gmail API.
@@ -110,6 +108,9 @@ if __name__ == '__main__':
                         type=int,
                         help='gmail query after timedelta days',
                         default=-7)
+    parser.add_argument('-o', '--out_dir',
+                        help='output subdirectory name',
+                        default='output')
 
     args = parser.parse_args()
 

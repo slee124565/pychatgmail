@@ -130,5 +130,5 @@ dmypy.json
 # ResumeChatBot
 credentials.json
 token.json
-html/
+output/*
 openai_comment.csv.DS_Store
