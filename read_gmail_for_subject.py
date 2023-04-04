@@ -1,5 +1,4 @@
 from __future__ import print_function
-
 import dotenv
 import base64
 import os.path
@@ -22,19 +21,58 @@ USER_TOKEN_FILE = os.getenv('USER_TOKEN_FILE', 'token.json')
 OUTPUT_DIR = os.getenv('OUTPUT_DIR', 'output')
 
 # If modifying these scopes, delete the file token.json.
-SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
+SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
+
+
+def set_gmail_msg_read(
+        msg_id,
+        oauth_client_secret_file=OAUTH_CLIENT_SECRET_FILE,
+        user_token_file=USER_TOKEN_FILE):
+    creds = None
+    # The file token.json stores the user's access and refresh tokens, and is
+    # created automatically when the authorization flow completes for the first
+    # time.
+    if os.path.exists(user_token_file):
+        creds = Credentials.from_authorized_user_file(user_token_file, SCOPES)
+    # If there are no (valid) credentials available, let the user log in.
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                oauth_client_secret_file, SCOPES)
+            creds = flow.run_local_server(port=0)
+        # Save the credentials for the next run
+        with open(user_token_file, 'w') as token:
+            token.write(creds.to_json())
+
+    try:
+        # Call the Gmail API
+        service = build('gmail', 'v1', credentials=creds)
+        message = service.users().messages().get(userId='me', id=msg_id).execute()
+        labels = message['labelIds']
+        if 'UNREAD' in labels:
+            labels.remove('UNREAD')
+            body = {'removeLabelIds': ['UNREAD']}
+            service.users().messages().modify(userId='me', id=msg_id, body=body).execute()
+            print(f'Message with ID: {msg_id} marked as read.')
+        else:
+            print(f'Skip, message with ID: {msg_id} already marked as read.')
+
+    except HttpError as error:
+        # TODO(developer) - Handle errors from gmail API.
+        print(f'An error occurred: {error}')
+    pass
 
 
 def read_gmail_for_subject(
         query_subject,
         query_labels=GMAIL_QUERY_LABELS,
         query_days=GMAIL_QUERY_DAYS,
-        set_msg_read=GMAIL_SET_MSG_READ,
         gmail_msg_max=GMAIL_MSG_MAX,
         oauth_client_secret_file=OAUTH_CLIENT_SECRET_FILE,
         user_token_file=USER_TOKEN_FILE,
         output_dir=OUTPUT_DIR):
-
     creds = None
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
@@ -73,6 +111,7 @@ def read_gmail_for_subject(
             print(f'no gmail message query result')
             return
 
+        match_msgs = []
         for msg in results.get('messages'):
             msg_id = msg.get('id')
             message = service.users().messages().get(userId='me', id=msg_id).execute()
@@ -96,6 +135,8 @@ def read_gmail_for_subject(
             with open(output_file, 'w') as fh:
                 fh.write(msg_body)
             print([msg_id, msg_subject, output_file])
+            match_msgs.append([msg_id, msg_subject, output_file])
+        return match_msgs
 
     except HttpError as error:
         # TODO(developer) - Handle errors from gmail API.
@@ -106,13 +147,13 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--query_subject',
+    parser.add_argument('-q', '--query_subject',
                         help='gmail query subject match string',
-                        default=os.getenv('GMAIL_QUERY_SUBJECT_TXT', '104應徵履歷【UI/UX'))
+                        default=os.getenv('GMAIL_QUERY_SUBJECT_TXT', '104應徵履歷【IoT'))
     parser.add_argument('-d', '--query_days',
                         type=int,
                         help='gmail query the day before query_days',
-                        default=os.getenv('GMAIL_QUERY_DAYS', -7))
+                        default=os.getenv('GMAIL_QUERY_DAYS', -14))
     parser.add_argument('-l', '--query_labels',
                         help='gmail query labels',
                         default=os.getenv('GMAIL_QUERY_LABELS', 'INBOX'))
@@ -135,15 +176,14 @@ if __name__ == '__main__':
                         default=os.getenv('OUTPUT_DIR', 'output'))
 
     args = parser.parse_args()
-    if not args.query_subject.strip():
-        parser.print_help()
-        raise ValueError(f'Args query_subject cannot be empty, [{args.query_subject}]')
+
+    # set_gmail_msg_read(msg_id='1871863fee1b6c67')
+
     read_gmail_for_subject(
         query_subject=args.query_subject,
         query_labels=args.query_labels,
         query_days=args.query_days,
         gmail_msg_max=args.max_result,
-        set_msg_read=args.set_msg_read,
         oauth_client_secret_file=args.oauth_client_secret_file,
         user_token_file=args.user_token_file,
         output_dir=args.output_dir)
