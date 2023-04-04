@@ -1,6 +1,5 @@
 from __future__ import print_function
 
-from resume_msg import ResumeMsg
 import openai
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -8,10 +7,11 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-import bs4
-import re
 from lxml import etree
 from datetime import date, datetime, timedelta
+from dataclasses import dataclass
+import bs4
+import re
 import json
 import dotenv
 import base64
@@ -40,7 +40,25 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
 
 
-def _convert_104_resume_html(msg_104_body) -> ResumeMsg:
+@dataclass
+class ResumeMsg:
+    msg_id: str  # gmail message ID
+    name: str  # 應徵者名字
+    applied_position: str  # 應徵職務
+    education: str  # 教育背景
+    experiences: str  # 工作經驗
+    skills: str  # 專長技能
+    self_introduction: str  # 自傳
+    # msg_receive_date: str  # 應徵快照：2023/03/09 09:34
+    # job_104_code: str  # 代碼：1689936700883
+    gpt_comment: str = ''  # 評論結果
+    qualified: str = None  # PASS|FAIL
+
+    def __str__(self):
+        return f'應徵者: {self.name}, 應徵職務：{self.applied_position},評論結果:{self.qualified}'
+
+
+def convert_104_html_resume_msg(msg_104_body) -> ResumeMsg:
     _convert = {
         'msg_id': None
     }
@@ -182,7 +200,7 @@ def gmail_104_gpt_hr(title, date_since, qualifications):
                 continue
             msg_body = base64.urlsafe_b64decode(msg_body_data).decode("utf-8")
             # convert 104 resume html msg
-            resume = _convert_104_resume_html(msg_body)
+            resume = convert_104_html_resume_msg(msg_body)
             resume.msg_id = msg_id
             resumes.append(resume)
 
