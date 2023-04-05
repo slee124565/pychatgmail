@@ -14,21 +14,12 @@ dotenv.load_dotenv()
 SOURCE_DIR = os.getenv('OUTPUT_DIR', 'output')
 
 
-def convert_resume_104_html(resume_104_file,
-                            source_dir=SOURCE_DIR):
-    parsed_file = os.path.join(source_dir, f'{os.path.splitext(resume_104_file)[0]}.json')
-    # if os.path.exists(parsed_file):
-    #     continue
-    # print(f'parse {gmail_html_file}')
-
+def convert_resume_104_html(msg_104_content, gmail_msg_id=None):
     parse_res = {
-        'email_id': os.path.splitext(resume_104_file)[0]
+        'email_id': gmail_msg_id
     }
 
-    html_file = os.path.join(source_dir, resume_104_file)
-    with open(html_file, 'r') as fh:
-        soup = bs4.BeautifulSoup(fh.read(), 'html.parser')
-
+    soup = bs4.BeautifulSoup(msg_104_content, 'html.parser')
     dom = etree.HTML(str(soup))
     job = dom.xpath(
         r'/html/body/table[2]/tbody/tr/td/table[1]/tbody/tr[2]/td/table/tbody/tr[1]/td/div[2]/a'
@@ -86,10 +77,7 @@ def convert_resume_104_html(resume_104_file,
         skills=parse_res.get('技能專長', ''),
         self_introduction=parse_res.get('自傳', ''),
     )
-    with open(parsed_file, 'w') as f:
-        # f.write(json.dumps(parse_res, ensure_ascii=False, indent=2))
-        f.write(json.dumps(candidate.__dict__, ensure_ascii=False, indent=2))
-    print(f'parse msg {candidate.msg_id}, {candidate.name}, {candidate.applied_position}, output {parsed_file}')
+    return candidate
 
 
 if __name__ == '__main__':
@@ -113,8 +101,11 @@ if __name__ == '__main__':
 
     # check if no target file exist, process all files under {source_dir} subdirectory
     if not targets:
-        for (_, _, filenames) in os.walk(os.path.join('.', args.source_dir)):
-            targets = filenames
+        for (_root, _directory, filenames) in os.walk(os.path.join('.', args.source_dir)):
+            if _root == os.path.join('.', args.source_dir):
+                targets = [_file for _file in filenames if os.path.splitext(_file)[1] == '.html']
+            else:
+                pass
 
     if not targets:
         print(f'no {args.source_dir} file exist to process')
@@ -124,6 +115,11 @@ if __name__ == '__main__':
         if not filename.endswith('.html'):
             continue
 
-        convert_resume_104_html(
-            resume_104_file=filename,
-            source_dir=args.source_dir)
+        parsed_file = os.path.splitext(filename)[0] + ".json"
+        with open(os.path.join(args.source_dir, filename), 'r') as fp:
+            candidate = convert_resume_104_html(msg_104_content=fp.read())
+
+        with open(os.path.join(args.source_dir, parsed_file), 'w') as f:
+            # f.write(json.dumps(parse_res, ensure_ascii=False, indent=2))
+            f.write(json.dumps(candidate.__dict__, ensure_ascii=False, indent=2))
+        print(f'parse msg {candidate.msg_id}, {candidate.name}, {candidate.applied_position}, output {parsed_file}')

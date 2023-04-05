@@ -11,13 +11,15 @@ dotenv.load_dotenv()
 SOURCE_DIR = os.getenv('SOURCE_DIR', 'output')
 OPENAI_KEY = os.getenv('OPENAI_KEY')
 OPENAI_GPT_MODEL = os.getenv('OPENAI_GPT_MODEL', 'gpt-3.5-turbo')
-OPENAI_API_TEMPERATURE = os.getenv('OPENAI_API_TEMPERATURE', 0.7)
+OPENAI_GPT_TEMPERATURE = os.getenv('OPENAI_API_TEMPERATURE', 0.7)
 openai.api_key = OPENAI_KEY
 
 
-def request_gpt_resume_prompt(msg_id, name, criteria, experiences, skills,
-                              gpt_model=OPENAI_GPT_MODEL,
-                              openai_api_temperature=float(OPENAI_API_TEMPERATURE)):
+def request_gpt_resume_prompt(
+        msg_id, name, criteria, experiences, skills,
+        gpt_model=OPENAI_GPT_MODEL,
+        api_key=OPENAI_KEY,
+        api_temperature=float(OPENAI_GPT_TEMPERATURE)):
     if not openai.api_key:
         raise ValueError(f'OPENAI API KEY Invalid')
 
@@ -26,10 +28,11 @@ def request_gpt_resume_prompt(msg_id, name, criteria, experiences, skills,
         {"role": "user", "content": f"工作經歷如下：\n'{experiences}'\n技能專長如下：\n'{skills}'"},
     ]
     print(f'send {msg_id}, {name} for gtp checking ...')
+    openai.api_key = api_key
     response = openai.ChatCompletion.create(
         model=gpt_model,
         messages=messages,
-        temperature=openai_api_temperature,
+        temperature=api_temperature,
     )
     comment = response['choices'][0]['message']['content'] if response['choices'][0]['message']['content'] else None
     comment = re.sub(r'\n\s*\n', '\n', comment)
@@ -47,10 +50,10 @@ if __name__ == "__main__":
     dotenv.load_dotenv()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '-k', '--openai_key',
-        help='openai api key',
-        default=os.getenv('OPENAI_KEY'))
+    # parser.add_argument(
+    #     '-k', '--openai_key',
+    #     help='openai api key',
+    #     default=os.getenv('OPENAI_KEY'))
     parser.add_argument(
         '-p', '--prompt_file',
         help='openai prompt text content',
@@ -66,6 +69,17 @@ if __name__ == "__main__":
         help='candidate json src subdirectory',
         default='output'
     )
+    parser.add_argument(
+        '--openai_gpt_model',
+        help='openai gpt model name',
+        default=os.getenv('OPENAI_GPT_MODEL', None)
+    )
+    parser.add_argument(
+        '--openai_gpt_temperature',
+        type=float,
+        help='openai gpt temperature arg',
+        default=os.getenv('OPENAI_API_TEMPERATURE', 0.7)
+    )
     args = parser.parse_args()
 
     targets = []
@@ -76,8 +90,11 @@ if __name__ == "__main__":
 
     # check if no target file exist, process all files under {src_dir} subdirectory
     if not targets:
-        for (_, _, filenames) in os.walk(os.path.join('.', args.src_dir)):
-            targets = [file for file in filenames if file.endswith('json')]
+        for (_root, _, filenames) in os.walk(os.path.join('.', args.src_dir)):
+            if _root == os.path.join('.', args.src_dir):
+                targets = [file for file in filenames if file.endswith('json')]
+            else:
+                pass
 
     if not targets:
         print(f'no {args.src_dir} file exist to process')
@@ -90,6 +107,7 @@ if __name__ == "__main__":
     summary = []
     for file in targets:
         # read JobApplicationMsg from json file
+        print(f'reading resume json {file}')
         with open(os.path.join(args.src_dir, file), 'r') as fh:
             resume = JobApplicationMsg(**json.load(fh))
         validation, comment = request_gpt_resume_prompt(
@@ -97,7 +115,8 @@ if __name__ == "__main__":
             name=resume.name,
             criteria=job_criteria,
             experiences=resume.work_experience,
-            skills=resume.skills
+            # skills=resume.skills
+            skills=''
         )
         resume.inspection = validation
         resume.comment = comment
@@ -107,7 +126,4 @@ if __name__ == "__main__":
         # add resume inspection result into summary
         print(f'{resume.msg_id}, {resume.name}, {resume.inspection} \n{resume.comment}\n')
         summary.append([resume.msg_id, resume.name, resume.inspection])
-
-    pprint(summary)
-
 
