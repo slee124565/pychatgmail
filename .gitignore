@@ -127,6 +127,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-# ResumeChatBot
+
+# pychatgmail
 credentials.json
 token.json
+.gmail/

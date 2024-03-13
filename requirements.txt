@@ -6,3 +6,7 @@ beautifulsoup4
 openai
 pydantic
 pytz
+lxml
+python-dotenv
+tokenizers
+click
