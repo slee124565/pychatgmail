@@ -13,7 +13,6 @@ import json
 import dateutil.parser
 import pytz
 
-
 # If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
@@ -75,7 +74,7 @@ class GmailApi:
             maxResults=100,
             q=query,
             pageToken=next_token
-            ).execute()
+        ).execute()
         # print(json.dumps(msgs))
 
         final_list = []

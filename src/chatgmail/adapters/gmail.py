@@ -15,6 +15,15 @@ logger = logging.getLogger(__name__)
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
 
+def read_msg_from_cache(msg_id: str) -> str:
+    """
+    Read the email message from cache file.
+    """
+    cache_file = os.path.join('.gmail', f'{msg_id}.html')
+    with open(cache_file, 'r', encoding='utf-8') as file:
+        return file.read()
+
+
 class MailInbox(abc.ABC):
 
     @abc.abstractmethod
@@ -81,11 +90,11 @@ class GmailInbox(MailInbox):
                     continue
 
                 msg_body = base64.urlsafe_b64decode(message.get('payload').get('body').get('data')).decode("utf-8")
-                
+
                 # create a hidden folder (.gmail) if not exist to store the html files
                 if not os.path.exists('.gmail'):
                     os.makedirs('.gmail')
-                
+
                 # save the html file
                 html_file = os.path.join('.gmail', f'{msg_id}.html')
                 # html_file = f'{msg_id}-{msg_subject}.html'
@@ -93,7 +102,7 @@ class GmailInbox(MailInbox):
                     fh.write(msg_body)
                 logger.debug([msg_id, msg_subject, html_file])
                 msgs.append([msg_id, msg_subject, html_file])
-            
+
             return msgs
 
         except HttpError as error:

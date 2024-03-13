@@ -36,7 +36,7 @@ logging_config = {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "standard",
-            "level": "INFO",
+            "level": "DEBUG",
             "stream": "ext://sys.stdout"
         },
         "default": {
