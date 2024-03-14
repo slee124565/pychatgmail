@@ -36,7 +36,7 @@ logging_config = {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "standard",
-            "level": "DEBUG",
+            "level": "INFO",
             "stream": "ext://sys.stdout"
         },
         "default": {
@@ -58,7 +58,7 @@ logging_config = {
             "propagate": False
         },
         "chatgmail": {
-            "handlers": ["console"],
+            "handlers": ["console", "default"],
             "level": "DEBUG",
             "propagate": False
         },
