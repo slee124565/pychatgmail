@@ -45,7 +45,7 @@ logging_config = {
             "filename": "chatgmail.log",
             "maxBytes": 5 * 1024 * 1024,  # 5 MB
             "backupCount": 5,
-            "level": "INFO"
+            "level": "DEBUG"
         },
     },
     "root": {
@@ -53,7 +53,7 @@ logging_config = {
     },
     "loggers": {
         "chatgmail.entrypoints.cli": {
-            "handlers": ["console"],
+            "handlers": ["console", "default"],
             "level": "DEBUG",
             "propagate": False
         },
