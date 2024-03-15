@@ -9,6 +9,122 @@ from chatgmail.domain import model
 logger = logging.getLogger(__name__)
 
 
+def _xpath_key_table_mapping(dom: etree.HTML) -> dict:
+    # 关键词列表
+    keywords = [
+        '應徵職務：',
+        '個人資料',
+        '求職者希望條件',
+        '工作經歷',
+        '教育背景',
+        '語文能力',
+        '技能專長',
+        '自傳',
+        '附件',
+        '專案成就',
+        '其他作品'
+    ]
+
+    # 使用 XPath 找到所有 class 属性包含 mail__container 的 <table> 标签
+    xpath_string = "//table[contains(@class, 'mail__container')]"
+    tables = dom.xpath(xpath_string)
+
+    # 在第一个 mail__container <table> 元素中，找到所有子 <table> 标签
+    parent_table = tables[0]
+    child_tables = parent_table.xpath(".//table")
+
+    # 儲存簡歷 table 文字訊息
+    contents = []
+    for _table in child_tables:
+        table_text = etree.tostring(_table, method="text", encoding="unicode")
+        table_text = ' '.join(table_text.split())  # 清理文本
+        contents.append(table_text)
+
+    # 存储匹配到的信息
+    matches = []
+
+    for keyword in keywords:
+        match_found = False
+        if tables:
+            # 遍历所有找到的子 <table> 标签
+            for index, child_table in enumerate(child_tables):
+                # 使用 etree.tostring() 方法并设置 method="text" 来获取纯文本，然后清理空白符
+                table_text = etree.tostring(child_table, method="text", encoding="unicode")
+                table_text = ' '.join(table_text.split())  # 清理文本
+
+                # 显示每个 child_table 的摘要信息
+                logger.debug(f"Child Table Index: {index}, Table Digest: {table_text[:50]}...")
+
+                # 检查关键词是否在文本开头
+                if table_text.startswith(keyword):
+                    matches.append({
+                        "keyword": keyword,
+                        "child_table_index": index,
+                        "position": 0
+                    })
+                    match_found = True
+                    break  # 匹配到后即跳出循环
+
+        # 如果没有找到匹配项，则添加没有匹配的记录
+        if not match_found:
+            matches.append({
+                "keyword": keyword,
+                "child_table_index": None,
+                "position": None
+            })
+
+    # 输出匹配到的信息
+    for match in matches:
+        logger.debug(
+            f"Keyword: '{match['keyword']}', Child Table Index: {match['child_table_index']}, Position: {match['position']}")
+
+    # 蒐集 keyword '工作經歷' 到 keyword '教育背景' 之間 tables 的所有文字
+    logger.debug(f'contents: {len(contents)}')
+    work_ex_matched = next((match for match in matches if match['keyword'] == '工作經歷'), None)
+    logger.debug(f'work_ex_matched: {work_ex_matched}')
+    edu_matched = next((match for match in matches if match['keyword'] == '教育背景'), None)
+    logger.debug(f'edu_matched: {edu_matched}')
+    if not work_ex_matched or not edu_matched:
+        raise ValueError('No matched keyword found for "工作經歷" or "教育背景"')
+    logger.debug(f'contents sliced: {work_ex_matched["child_table_index"] + 2}: {edu_matched["child_table_index"]}')
+    # work_experience = contents[work_ex_matched['child_table_index']+2:edu_matched['child_table_index']]
+
+    experiences = contents[work_ex_matched['child_table_index'] + 2:edu_matched['child_table_index']]
+    work_experiences = []
+
+    # 使用 range 函数和 len(contents) 确定循环范围，步长为 2
+    # 使用 min 函数确保在 contents 为奇数长度时不会出现索引越界
+    for i in range(0, min(len(experiences), len(experiences) - len(experiences) % 2), 2):
+        # 格式化字符串并添加到新的列表中
+        work_experience = f'任職的公司和職位和年資：{experiences[i]} ，當時的工作內容：{experiences[i + 1]}'
+        work_experiences.append(work_experience)
+
+    # 如果 contents 的长度为奇数，处理最后一个元素
+    if len(experiences) % 2 != 0:
+        work_experience = f'任職的公司和職位和年資：{experiences[-1]} ，當時的工作內容：未提供'
+        work_experiences.append(work_experience)
+
+    # 打印结果
+    for experience in work_experiences:
+        logger.debug(experience)
+
+    # 擷取 keyword '教育背景' 對應到的 position_index + 1 table 的文字
+    education_matched = next((match for match in matches if match['keyword'] == '教育背景'), None)
+    education = contents[education_matched['child_table_index'] + 1]
+    logger.debug(f'education: {education}')
+
+    # 擷取 keyword '自傳' 對應到的 position_index + 1 table 的文字
+    autobiography_matched = next((match for match in matches if match['keyword'] == '自傳'), None)
+    autobiography = contents[autobiography_matched['child_table_index'] + 1] if autobiography_matched else ''
+    logger.debug(f'autobiography: {autobiography}')
+
+    return {
+        '工作經歷': work_experiences,
+        '教育背景': education,
+        '自傳': autobiography,
+    }
+
+
 def _xpath_string_mapping(dom: etree.HTML, xpath: str) -> str:
     elements = dom.xpath(xpath)
     logger.debug(f'xpath: {xpath}')
@@ -34,63 +150,28 @@ def candidate_mapper(msg_id: str, resume_104_html: str) -> model.Candidate:
     field_xpath_mapping = {
         'applied_position': '/html/body/table[2]/tbody/tr/td/table[1]/tbody/tr[2]/td/table/tbody/tr[1]/td/div[2]/a',
         'self_recommendation': '/html/body/table[2]/tbody/tr/td/table[1]/tbody/tr[2]/td/table/tbody/tr[2]/td/div[2]',
+        'msg_received_date': '/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[2]/text()[1]',
         'job_104_code': '/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[2]/text()[2]',
         'name': "/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/b/a/span",
         'age': '/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/text()[1]',
         'gender': '/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/text()[2]',
     }
 
-    # 關鍵字列表
-    keywords = [
-        '應徵職務：',
-        '個人資料',
-        '求職者希望條件',
-        '工作經歷',
-        '教育背景',
-        '語文能力',
-        '技能專長',
-        '自傳',
-    ]
-
-    # 使用 XPath 找到所有 class 屬性包含 mail__container 的 <table> 標籤
-    xpath_string = "//table[contains(@class, 'mail__container')]"
-    tables = dom.xpath(xpath_string)
-    logger.debug(f"tables: {len(tables)}")
-
-    # 存儲匹配到的信息
-    matches = []
-
-    if tables:
-        # 在第一個 mail__container <table> 元素中，找到所有子 <table> 標籤
-        parent_table = tables[0]
-        child_tables = parent_table.xpath(".//table")
-
-        # 遍歷所有找到的子 <table> 標籤
-        for index, child_table in enumerate(child_tables):
-            table_text = etree.tostring(child_table, method="text", encoding="unicode")
-
-            # 對每個關鍵詞進行檢查
-            for keyword in keywords:
-                if keyword in table_text:
-                    # 紀錄匹配到的關鍵詞及其所在的子表格索引和在文本中的位置
-                    keyword_position = table_text.find(keyword)
-                    matches.append({
-                        "child_table_index": index,
-                        "keyword": keyword,
-                        "position": keyword_position
-                    })
-
-    # 輸出匹配到的信息
-    for match in matches:
-        logger.debug(
-            f"Child Table Index: {match['child_table_index']}, Keyword: '{match['keyword']}', Position: {match['position']}")
+    key_contents = _xpath_key_table_mapping(dom)
+    # '工作經歷': work_experiences,
+    # '教育背景': education,
+    # '自傳': autobiography,
 
     return model.Candidate(
         msg_id=msg_id,
         applied_position=_xpath_string_mapping(dom, field_xpath_mapping['applied_position']),
         self_recommendation=_xpath_string_mapping(dom, field_xpath_mapping['self_recommendation']),
+        msg_receive_date=_xpath_string_mapping(dom, field_xpath_mapping['msg_received_date']),
         job_104_code=_xpath_string_mapping(dom, field_xpath_mapping['job_104_code']),
         name=_xpath_string_mapping(dom, field_xpath_mapping['name']),
         age=_xpath_string_mapping(dom, field_xpath_mapping['age']),
         gender=_xpath_string_mapping(dom, field_xpath_mapping['gender']),
+        work_experiences=key_contents.get('工作經歷', ''),
+        education=key_contents.get('教育背景', ''),
+        autobiography=key_contents.get('自傳', ''),
     )

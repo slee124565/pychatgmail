@@ -2,7 +2,7 @@ import bs4
 from lxml import etree
 
 # 使用 with 语句确保文件正确关闭
-with open('.gmail/18e1c222bb4ae653.html', 'r', encoding='utf-8') as file:
+with open('.gmail/18e3c44f6ca6d0a4.html', 'r', encoding='utf-8') as file:
     # 读取文件内容赋值给 html_string
     html_string = file.read()
 
@@ -21,6 +21,7 @@ keywords = [
     '技能專長',
     '自傳',
     '附件',
+    '專案成就',
     '其他作品'
 ]
 
@@ -28,16 +29,24 @@ keywords = [
 xpath_string = "//table[contains(@class, 'mail__container')]"
 tables = dom.xpath(xpath_string)
 
+# 在第一个 mail__container <table> 元素中，找到所有子 <table> 标签
+parent_table = tables[0]
+child_tables = parent_table.xpath(".//table")
+
+# 儲存簡歷 table 文字訊息
+contents = []
+for _table in child_tables:
+    table_text = etree.tostring(_table, method="text", encoding="unicode")
+    table_text = ' '.join(table_text.split())  # 清理文本
+    contents.append(table_text)
+
 # 存储匹配到的信息
 matches = []
+
 
 for keyword in keywords:
     match_found = False
     if tables:
-        # 在第一个 mail__container <table> 元素中，找到所有子 <table> 标签
-        parent_table = tables[0]
-        child_tables = parent_table.xpath(".//table")
-
         # 遍历所有找到的子 <table> 标签
         for index, child_table in enumerate(child_tables):
             # 使用 etree.tostring() 方法并设置 method="text" 来获取纯文本，然后清理空白符
@@ -69,3 +78,49 @@ for keyword in keywords:
 for match in matches:
     print(
         f"Keyword: '{match['keyword']}', Child Table Index: {match['child_table_index']}, Position: {match['position']}")
+
+# 蒐集 keyword '工作經歷' 到 keyword '教育背景' 之間 tables 的所有文字
+print(f'contents: {len(contents)}')
+work_ex_matched = next((match for match in matches if match['keyword'] == '工作經歷'), None)
+print(f'work_ex_matched: {work_ex_matched}')
+edu_matched = next((match for match in matches if match['keyword'] == '教育背景'), None)
+print(f'edu_matched: {edu_matched}')
+if not work_ex_matched or not edu_matched:
+    raise ValueError('No matched keyword found for "工作經歷" or "教育背景"')
+print(f'contents sliced: {work_ex_matched["child_table_index"]+2}: {edu_matched["child_table_index"]}')
+# work_experience = contents[work_ex_matched['child_table_index']+2:edu_matched['child_table_index']]
+
+experiences = contents[work_ex_matched['child_table_index']+2:edu_matched['child_table_index']]
+work_experiences = []
+
+# 使用 range 函数和 len(contents) 确定循环范围，步长为 2
+# 使用 min 函数确保在 contents 为奇数长度时不会出现索引越界
+for i in range(0, min(len(experiences), len(experiences) - len(experiences) % 2), 2):
+    # 格式化字符串并添加到新的列表中
+    work_experience = f'任職的公司和職位和年資：{experiences[i]} ，當時的工作內容：{experiences[i+1]}'
+    work_experiences.append(work_experience)
+
+# 如果 contents 的长度为奇数，处理最后一个元素
+if len(experiences) % 2 != 0:
+    work_experience = f'任職的公司和職位和年資：{experiences[-1]} ，當時的工作內容：未提供'
+    work_experiences.append(work_experience)
+
+# 打印结果
+for experience in work_experiences:
+    print(experience)
+
+# 擷取 keyword '教育背景' 對應到的 position_index + 1 table 的文字
+education_matched = next((match for match in matches if match['keyword'] == '教育背景'), None)
+education = contents[education_matched['child_table_index']+1]
+print(f'education: {education}')
+
+# 擷取 keyword '自傳' 對應到的 position_index + 1 table 的文字
+autobiography_matched = next((match for match in matches if match['keyword'] == '自傳'), None)
+autobiography = contents[autobiography_matched['child_table_index']+1] if autobiography_matched else ''
+print(f'autobiography: {autobiography}')
+
+result = {
+    '工作經歷': work_experiences,
+    '教育背景': education,
+    '自傳': autobiography,
+}
