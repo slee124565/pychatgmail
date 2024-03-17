@@ -18,6 +18,22 @@ class Candidate:
     comment: str = ''  # 評論結果
     inspection: str = None
 
+    def digest(self) -> dict:
+        assert isinstance(self.work_experiences, list), f'work_experiences is not a list: {self.work_experiences}'
+        _exs = []
+        _work_ex_tmp = [_exs.append(f'{ex[:80]}...') for ex in self.work_experiences]
+        _digest = {
+            'msg_id': self.msg_id,
+            'name': self.name,
+            'age': self.age,
+            'applied_position': self.applied_position,
+            'msg_receive_date': self.msg_receive_date,
+            'job_104_code': self.job_104_code,
+            'education': f'{self.education[:80]}...',
+            'work_experiences': _exs,
+        }
+        return _digest
+
     def validate(self) -> bool:
         """
         Validate the candidate data.

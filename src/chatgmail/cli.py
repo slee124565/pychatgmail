@@ -1,3 +1,5 @@
+import json
+
 import click
 import logging.config as logging_config
 from chatgmail import config
@@ -39,6 +41,7 @@ def check_gmail_msg(msg_id):
     msg_html = gmail.read_msg_from_cache(msg_id)
     candidate = orm.candidate_mapper(msg_id, msg_html)
     click.echo(f'check mgs: {msg_id} | {candidate.validate()}')
+    click.echo(f'{json.dumps(candidate.digest(), indent=2, ensure_ascii=False, default=str)}')
 
 
 @click.command(name='analyze-mail')
