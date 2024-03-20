@@ -115,7 +115,8 @@ def _xpath_key_table_mapping(dom: etree.HTML) -> dict:
 
     # 擷取 keyword '自傳' 對應到的 position_index + 1 table 的文字
     autobiography_matched = next((match for match in matches if match['keyword'] == '自傳'), None)
-    autobiography = contents[autobiography_matched['child_table_index'] + 1] if autobiography_matched else ''
+    autobiography = contents[autobiography_matched['child_table_index'] + 1] \
+        if autobiography_matched['child_table_index'] else ''
     logger.debug(f'autobiography: {autobiography}')
 
     return {
