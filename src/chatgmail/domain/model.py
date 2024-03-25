@@ -13,7 +13,8 @@ class Candidate:
     gender: str  # 性別
     work_experiences: object  # 工作經驗
     education: str  # 教育背景
-    # skills: str  # 專長技能
+    lang_proficiency: str  # 語文能力
+    specialized_skills: str  # 專長技能
     autobiography: str  # 自傳
     comment: str = ''  # 評論結果
     inspection: str = None

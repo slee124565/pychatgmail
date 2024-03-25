@@ -113,6 +113,18 @@ def _xpath_key_table_mapping(dom: etree.HTML) -> dict:
     education = contents[education_matched['child_table_index'] + 1]
     logger.debug(f'education: {education}')
 
+    # 擷取 keyword '語文能力' 對應到的 position_index + 1 table 的文字
+    lang_proficiency = next((match for match in matches if match['keyword'] == '語文能力'), None)
+    lang_proficiency = contents[lang_proficiency['child_table_index'] + 1] \
+        if lang_proficiency['child_table_index'] else ''
+    logger.debug(f'lang_proficiency: {lang_proficiency}')
+
+    # 擷取 keyword '技能專長' 對應到的 position_index + 1 table 的文字
+    specialized_skills = next((match for match in matches if match['keyword'] == '技能專長'), None)
+    specialized_skills = contents[specialized_skills['child_table_index'] + 1] \
+        if specialized_skills['child_table_index'] else ''
+    logger.debug(f'specialized_skills: {specialized_skills}')
+
     # 擷取 keyword '自傳' 對應到的 position_index + 1 table 的文字
     autobiography_matched = next((match for match in matches if match['keyword'] == '自傳'), None)
     autobiography = contents[autobiography_matched['child_table_index'] + 1] \
@@ -122,6 +134,8 @@ def _xpath_key_table_mapping(dom: etree.HTML) -> dict:
     return {
         '工作經歷': work_experiences,
         '教育背景': education,
+        '語文能力': lang_proficiency,
+        '技能專長': specialized_skills,
         '自傳': autobiography,
     }
 
@@ -174,5 +188,7 @@ def candidate_mapper(msg_id: str, resume_104_html: str) -> model.Candidate:
         gender=_xpath_string_mapping(dom, field_xpath_mapping['gender']),
         work_experiences=key_contents.get('工作經歷', ''),
         education=key_contents.get('教育背景', ''),
+        lang_proficiency=key_contents.get('語文能力', ''),
+        specialized_skills=key_contents.get('技能專長', ''),
         autobiography=key_contents.get('自傳', ''),
     )
