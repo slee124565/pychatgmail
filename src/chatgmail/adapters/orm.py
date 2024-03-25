@@ -34,10 +34,13 @@ def _xpath_key_table_mapping(dom: etree.HTML) -> dict:
     child_tables = parent_table.xpath(".//table")
 
     # 儲存簡歷 table 文字訊息
+    _count = 0
     contents = []
     for _table in child_tables:
         table_text = etree.tostring(_table, method="text", encoding="unicode")
         table_text = ' '.join(table_text.split())  # 清理文本
+        # 显示每个 child_table 的摘要信息
+        logger.debug(f'{_count}: {table_text[:50]}...')
         contents.append(table_text)
 
     # 存储匹配到的信息
@@ -51,9 +54,6 @@ def _xpath_key_table_mapping(dom: etree.HTML) -> dict:
                 # 使用 etree.tostring() 方法并设置 method="text" 来获取纯文本，然后清理空白符
                 table_text = etree.tostring(child_table, method="text", encoding="unicode")
                 table_text = ' '.join(table_text.split())  # 清理文本
-
-                # 显示每个 child_table 的摘要信息
-                logger.debug(f"Child Table Index: {index}, Table Digest: {table_text[:50]}...")
 
                 # 检查关键词是否在文本开头
                 if table_text.startswith(keyword):

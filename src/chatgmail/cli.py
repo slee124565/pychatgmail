@@ -1,11 +1,15 @@
 import json
+import os
 
 import click
+import dotenv
 import logging.config as logging_config
 from chatgmail import config
 from chatgmail.adapters import gmail, orm
 
+dotenv.load_dotenv()
 logging_config.dictConfig(config.logging_config)
+GMAIL_MSG_FOLDER = os.getenv('GMAIL_MSG_FOLDER', '.gmail')
 
 
 @click.group()
@@ -42,6 +46,30 @@ def check_gmail_msg(msg_id):
     candidate = orm.candidate_mapper(msg_id, msg_html)
     click.echo(f'check mgs: {msg_id} | {candidate.validate()}')
     click.echo(f'{json.dumps(candidate.digest(), indent=2, ensure_ascii=False, default=str)}')
+    # candidate_md = candidate.to_markdown()
+    # click.echo(candidate_md)
+    # _file = f'./{GMAIL_MSG_FOLDER}/{msg_id}.md'
+    # with open(_file, 'w', encoding='utf-8') as file:
+    #     file.write(candidate_md)
+
+
+@click.command(name='check-all-mail')
+def check_gmail_msg_all():
+    """
+    Check all the email (filename endwith .html) messages in the cache folder.
+    """
+    for msg_file in os.listdir(GMAIL_MSG_FOLDER):
+        # 使用 os.path.splitext() 分割文件名和扩展名
+        file_name, file_extension = os.path.splitext(msg_file)
+
+        # 检查文件扩展名是否为 .html
+        if file_extension.lower() == '.html':
+            msg_id = file_name
+            msg_html = gmail.read_msg_from_cache(msg_id)
+            candidate = orm.candidate_mapper(msg_id, msg_html)
+            click.echo(f'check mgs: {msg_id} | {candidate.validate()}')
+        else:
+            click.echo(f'Skipping file: {msg_file}')
 
 
 @click.command(name='analyze-mail')
@@ -59,6 +87,7 @@ def analyze_mail(input_file, output_file):
 chatgmailcli.add_command(list_gmail_subject_msgs)
 chatgmailcli.add_command(analyze_mail)
 chatgmailcli.add_command(check_gmail_msg)
+chatgmailcli.add_command(check_gmail_msg_all)
 
 if __name__ == '__main__':
     chatgmailcli()

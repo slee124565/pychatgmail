@@ -19,6 +19,37 @@ class Candidate:
     comment: str = ''  # 評論結果
     inspection: str = None
 
+    def to_markdown(self) -> str:
+        """convert to md format"""
+        if isinstance(self.work_experiences, list):
+            _work_experiences = '\n'.join([f'- {ex}' for ex in self.work_experiences])
+        else:
+            _work_experiences = self.work_experiences
+        _md = f"""
+# {self.name} ({self.job_104_code}) 應徵職務：{self.applied_position}
+
+## 基本資料
+- 年齡：{self.age}
+- 性別：{self.gender}
+- 應徵快照：{self.msg_receive_date}
+
+# 工作經驗
+{_work_experiences}
+
+# 教育背景
+{self.education}
+
+# 語文能力
+{self.lang_proficiency}
+
+# 專長技能
+{self.specialized_skills}
+
+# 自傳
+{self.autobiography}
+        """
+        return _md
+
     def digest(self) -> dict:
         assert isinstance(self.work_experiences, list), f'work_experiences is not a list: {self.work_experiences}'
         _exs = []
