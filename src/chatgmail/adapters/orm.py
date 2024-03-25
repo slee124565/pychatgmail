@@ -96,12 +96,12 @@ def _xpath_key_table_mapping(dom: etree.HTML) -> dict:
     # 使用 min 函数确保在 contents 为奇数长度时不会出现索引越界
     for i in range(0, min(len(experiences), len(experiences) - len(experiences) % 2), 2):
         # 格式化字符串并添加到新的列表中
-        work_experience = f'任職的公司和職位和年資：{experiences[i]} ，當時的工作內容：{experiences[i + 1]}'
+        work_experience = f'曾經任職公司：{experiences[i]} ，當時的工作內容：{experiences[i + 1]}'
         work_experiences.append(work_experience)
 
     # 如果 contents 的长度为奇数，处理最后一个元素
     if len(experiences) % 2 != 0:
-        work_experience = f'任職的公司和職位和年資：{experiences[-1]} ，當時的工作內容：未提供'
+        work_experience = f'曾經任職公司：{experiences[-1]} ，當時的工作內容：未提供'
         work_experiences.append(work_experience)
 
     # 打印结果

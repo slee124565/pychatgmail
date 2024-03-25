@@ -44,19 +44,20 @@ def check_gmail_msg(msg_id):
     """
     msg_html = gmail.read_msg_from_cache(msg_id)
     candidate = orm.candidate_mapper(msg_id, msg_html)
-    click.echo(f'check mgs: {msg_id} | {candidate.validate()}')
-    click.echo(f'{json.dumps(candidate.digest(), indent=2, ensure_ascii=False, default=str)}')
-    # candidate_md = candidate.to_markdown()
-    # click.echo(candidate_md)
-    # _file = f'./{GMAIL_MSG_FOLDER}/{msg_id}.md'
-    # with open(_file, 'w', encoding='utf-8') as file:
-    #     file.write(candidate_md)
+    click.echo(f'{msg_id}|{candidate.validate()}|{candidate}')
+    # click.echo(f'{json.dumps(candidate.digest(), indent=2, ensure_ascii=False, default=str)}')
+    candidate_md = candidate.to_markdown()
+    click.echo(candidate_md)
+    _file = f'./{GMAIL_MSG_FOLDER}/{msg_id}.md'
+    with open(_file, 'w', encoding='utf-8') as file:
+        file.write(candidate_md)
 
 
 @click.command(name='check-all-mail')
-def check_gmail_msg_all():
+@click.option('-q', '--query_applied_job', default=None, help='query job title text match string.')
+def check_gmail_msg_all(query_applied_job):
     """
-    Check all the email (filename endwith .html) messages in the cache folder.
+    Check all the email (filename end with .html) messages in the cache folder.
     """
     for msg_file in os.listdir(GMAIL_MSG_FOLDER):
         # 使用 os.path.splitext() 分割文件名和扩展名
@@ -67,9 +68,17 @@ def check_gmail_msg_all():
             msg_id = file_name
             msg_html = gmail.read_msg_from_cache(msg_id)
             candidate = orm.candidate_mapper(msg_id, msg_html)
-            click.echo(f'check mgs: {msg_id} | {candidate.validate()}')
-        else:
-            click.echo(f'Skipping file: {msg_file}')
+            if query_applied_job:
+                if candidate.applied_position.find(query_applied_job) == -1:
+                    continue
+                _work = f'{candidate.work_experiences[0]}' if (isinstance(candidate.work_experiences, list)
+                                                               and len(
+                            candidate.work_experiences)) else f'{candidate.work_experiences}'
+                click.echo(f'{candidate.name}, {candidate.age}, {candidate.gender}, {_work[:45]}...')
+            else:
+                click.echo(f'{msg_id}|{candidate.validate()}|{candidate}')
+        # else:
+        #     click.echo(f'\n** skipping file: {msg_file} **\n')
 
 
 @click.command(name='analyze-mail')

@@ -19,6 +19,12 @@ class Candidate:
     comment: str = ''  # 評論結果
     inspection: str = None
 
+    def __repr__(self):
+        _work = f'{self.work_experiences[0]}' if (isinstance(self.work_experiences, list)
+                                                  and len(self.work_experiences)) else f'{self.work_experiences}'
+        return (f'{self.name} for {self.applied_position} with {self.age}, {self.gender}, '
+                f'{_work[:45]}...')
+
     def to_markdown(self) -> str:
         """convert to md format"""
         if isinstance(self.work_experiences, list):
