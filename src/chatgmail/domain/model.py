@@ -1,4 +1,7 @@
+import logging
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -76,6 +79,19 @@ class Candidate:
         """
         Validate the candidate data.
         """
+        _detail = {
+            'msg_id': all([self.msg_id]),
+            'applied_position': all([self.applied_position]),
+            'self_recommendation': all([self.self_recommendation]),
+            'msg_receive_date': all([self.msg_receive_date]),
+            'job_104_code': all([self.job_104_code]),
+            'name': all([self.name]),
+            'age': all([self.age]),
+            'gender': all([self.gender]),
+            'work_experiences': all([self.work_experiences]),
+            'education': all([self.education]),
+        }
+        logger.debug(f'validate detail: {_detail}')
         return all(
             [
                 self.msg_id,

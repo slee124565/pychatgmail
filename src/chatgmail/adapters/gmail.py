@@ -60,7 +60,7 @@ class GmailInbox(MailInbox):
             service = build('gmail', 'v1', credentials=creds)
             query = f'after:{(date.today() - timedelta(days=offset_days)).strftime("%Y/%m/%d")}'
             if subject.strip():
-                query = f'subject:({subject}) {query}'
+                query = f'subject:({subject}) AND {query}'
             logger.debug(f'Gmail Inbox query with {query}')
 
             results = service.users().messages().list(
@@ -85,9 +85,9 @@ class GmailInbox(MailInbox):
 
                 msg_subject = next((header['value'] for header in message.get('payload').get('headers') if
                                     header['name'] == 'Subject'), None)
-                if str(msg_subject).find(subject) != 0:
-                    logger.debug(f'message subject not started with "{subject}", {msg_id}, {msg_subject}')
-                    continue
+                # if str(msg_subject).find(subject) != 0:
+                #     logger.debug(f'message subject not started with "{subject}", {msg_id}, {msg_subject}')
+                #     continue
 
                 msg_body = base64.urlsafe_b64decode(message.get('payload').get('body').get('data')).decode("utf-8")
 

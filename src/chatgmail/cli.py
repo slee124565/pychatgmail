@@ -21,12 +21,13 @@ def chatgmailcli():
 
 
 @click.command(name='list-mail')
-@click.option('-s', '--query_subject', default='104應徵履歷', help='Gmail query subject match string.')
-@click.option('-d', '--query_offset_days', default=7, type=int, help='Gmail query after timedelta days.')
+@click.option('-s', '--query_subject', default='104應徵履歷 OR 透過104轉寄履歷', help='Gmail query subject match string.')
+@click.option('-d', '--query_offset_days', default=14, type=int, help='Gmail query after timedelta days.')
 def list_gmail_subject_msgs(query_subject, query_offset_days):
     """
     List Gmail messages based on subject and offset-days.
     """
+    click.echo(f'Listing Gmail messages with subject: {query_subject} and offset days: {query_offset_days}')
     gmail_inbox = gmail.GmailInbox()
     msgs = gmail_inbox.list_msg(query_subject, query_offset_days)
     if msgs:
@@ -53,7 +54,7 @@ def check_gmail_msg(msg_id):
         file.write(candidate_md)
 
 
-@click.command(name='check-all-mail')
+@click.command(name='check-all-mail', help='Check all the email messages in the cache folder.')
 @click.option('-q', '--query_applied_job', default=None, help='query job title text match string.')
 def check_gmail_msg_all(query_applied_job):
     """
@@ -82,14 +83,18 @@ def check_gmail_msg_all(query_applied_job):
 
 
 @click.command(name='analyze-mail')
-@click.option('--input_file', help='Input file containing email messages for analysis.', required=True)
-@click.option('--output_file', default='analysis_result.txt', help='Output file to save the analysis results.')
-def analyze_mail(input_file, output_file):
+@click.argument('msg_id')
+@click.argument('prompt')
+def analyze_mail(msg_id, prompt):
     """
     Analyze the content of specified email messages.
     """
-    click.echo(f'Analyzing emails from {input_file} and saving results to {output_file}')
-    # Placeholder for actual implementation
+    msg_html = gmail.read_msg_from_cache(msg_id)
+    candidate = orm.candidate_mapper(msg_id, msg_html)
+    if not candidate.validate():
+        click.echo(f'Invalid candidate: {candidate}')
+        return
+    candidate_md = candidate.to_markdown()
 
 
 # Adding commands to the group

@@ -41,6 +41,7 @@ def _xpath_key_table_mapping(dom: etree.HTML) -> dict:
         table_text = ' '.join(table_text.split())  # 清理文本
         # 显示每个 child_table 的摘要信息
         logger.debug(f'{_count}: {table_text[:50]}...')
+        _count += 1
         contents.append(table_text)
 
     # 存储匹配到的信息
@@ -168,6 +169,9 @@ def candidate_mapper(msg_id: str, resume_104_html: str) -> model.Candidate:
         'msg_received_date': '/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[2]/text()[1]',
         'job_104_code': '/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[2]/text()[2]',
         'name': "/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/b/a/span",
+        'name2': "/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/a/b",
+        # /html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/b/a/span
+        # /html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/a/b
         'age': '/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/text()[1]',
         'gender': '/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/text()[2]',
     }
@@ -183,7 +187,8 @@ def candidate_mapper(msg_id: str, resume_104_html: str) -> model.Candidate:
         self_recommendation=_xpath_string_mapping(dom, field_xpath_mapping['self_recommendation']),
         msg_receive_date=_xpath_string_mapping(dom, field_xpath_mapping['msg_received_date']),
         job_104_code=_xpath_string_mapping(dom, field_xpath_mapping['job_104_code']),
-        name=_xpath_string_mapping(dom, field_xpath_mapping['name']),
+        name=_xpath_string_mapping(dom, field_xpath_mapping['name']) if _xpath_string_mapping(dom, field_xpath_mapping[
+            'name']) else _xpath_string_mapping(dom, field_xpath_mapping['name2']),
         age=_xpath_string_mapping(dom, field_xpath_mapping['age']),
         gender=_xpath_string_mapping(dom, field_xpath_mapping['gender']),
         work_experiences=key_contents.get('工作經歷', ''),
