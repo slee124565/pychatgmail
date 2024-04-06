@@ -150,7 +150,7 @@ def _xpath_string_mapping(dom: etree.HTML, xpath: str) -> str:
             inner_text = elements[0].text
         else:
             inner_text = f'{elements[0]}'.strip()
-        value = inner_text
+        value = inner_text if inner_text else ''
     else:
         value = ''
     return value.replace('\n', '').strip()
