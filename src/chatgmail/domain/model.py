@@ -14,6 +14,8 @@ class Candidate:
     name: str  # 應徵者名字
     age: str  # 年齡
     gender: str  # 性別
+    desired_job_title: str  # 希望職稱
+    employment_status: str  # 就業狀態
     work_experiences: object  # 工作經驗
     education: str  # 教育背景
     lang_proficiency: str  # 語文能力
@@ -41,6 +43,8 @@ class Candidate:
 - 年齡：{self.age}
 - 性別：{self.gender}
 - 應徵快照：{self.msg_receive_date}
+- 希望職稱：{self.desired_job_title}
+- 就業狀態：{self.employment_status}
 
 # 工作經驗
 {_work_experiences}
@@ -85,6 +89,8 @@ class Candidate:
             'self_recommendation': all([self.self_recommendation]),
             'msg_receive_date': all([self.msg_receive_date]),
             'job_104_code': all([self.job_104_code]),
+            'desired_job_title': all([self.desired_job_title]),
+            'employment_status': all([self.employment_status]),
             'name': all([self.name]),
             'age': all([self.age]),
             'gender': all([self.gender]),
@@ -95,14 +101,16 @@ class Candidate:
         return all(
             [
                 self.msg_id,
-                self.applied_position,
-                self.self_recommendation,
+                # self.applied_position,
+                # self.self_recommendation,
                 self.msg_receive_date,
                 self.job_104_code,
+                self.desired_job_title,
+                self.employment_status,
                 self.name,
                 self.age,
                 self.gender,
-                self.work_experiences,
+                # self.work_experiences,
                 self.education,
             ]
         )

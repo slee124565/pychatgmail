@@ -150,7 +150,7 @@ def _xpath_string_mapping(dom: etree.HTML, xpath: str) -> str:
             inner_text = elements[0].text
         else:
             inner_text = f'{elements[0]}'.strip()
-        value = inner_text
+        value = inner_text if inner_text else ''
     else:
         value = ''
     return value.replace('\n', '').strip()
@@ -174,6 +174,8 @@ def candidate_mapper(msg_id: str, resume_104_html: str) -> model.Candidate:
         # /html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/a/b
         'age': '/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/text()[1]',
         'gender': '/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/text()[2]',
+        'desired_job_title': '/html/body/table[2]/tbody/tr/td/table[3]/tbody/tr[2]/td/div[2]/table/tbody/tr[2]/td',
+        'employment_status': '/html/body/table[2]/tbody/tr/td/table[5]/tbody/tr[1]/td',
     }
 
     key_contents = _xpath_key_table_mapping(dom)
@@ -191,6 +193,8 @@ def candidate_mapper(msg_id: str, resume_104_html: str) -> model.Candidate:
             'name']) else _xpath_string_mapping(dom, field_xpath_mapping['name2']),
         age=_xpath_string_mapping(dom, field_xpath_mapping['age']),
         gender=_xpath_string_mapping(dom, field_xpath_mapping['gender']),
+        desired_job_title=_xpath_string_mapping(dom, field_xpath_mapping['desired_job_title']),
+        employment_status=_xpath_string_mapping(dom, field_xpath_mapping['employment_status']),
         work_experiences=key_contents.get('工作經歷', ''),
         education=key_contents.get('教育背景', ''),
         lang_proficiency=key_contents.get('語文能力', ''),

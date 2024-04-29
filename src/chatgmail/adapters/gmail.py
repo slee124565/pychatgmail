@@ -89,19 +89,23 @@ class GmailInbox(MailInbox):
                 #     logger.debug(f'message subject not started with "{subject}", {msg_id}, {msg_subject}')
                 #     continue
 
-                msg_body = base64.urlsafe_b64decode(message.get('payload').get('body').get('data')).decode("utf-8")
+                try:
+                    msg_body = base64.urlsafe_b64decode(message.get('payload').get('body').get('data')).decode("utf-8")
 
-                # create a hidden folder (.gmail) if not exist to store the html files
-                if not os.path.exists('.gmail'):
-                    os.makedirs('.gmail')
+                    # create a hidden folder (.gmail) if not exist to store the html files
+                    if not os.path.exists('.gmail'):
+                        os.makedirs('.gmail')
 
-                # save the html file
-                html_file = os.path.join('.gmail', f'{msg_id}.html')
-                # html_file = f'{msg_id}-{msg_subject}.html'
-                with open(html_file, 'w') as fh:
-                    fh.write(msg_body)
-                logger.debug([msg_id, msg_subject, html_file])
-                msgs.append([msg_id, msg_subject, html_file])
+                    # save the html file
+                    html_file = os.path.join('.gmail', f'{msg_id}.html')
+                    # html_file = f'{msg_id}-{msg_subject}.html'
+                    with open(html_file, 'w') as fh:
+                        fh.write(msg_body)
+                    logger.debug([msg_id, msg_subject, html_file])
+                    msgs.append([msg_id, msg_subject, html_file])
+                except Exception as e:
+                    logger.error(f'error: {e}, {msg_id}, {msg_subject}')
+                    continue
 
             return msgs
 
