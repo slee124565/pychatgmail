@@ -20,8 +20,20 @@ def chatgmailcli():
     pass
 
 
+# @click.command(name='get-mail-by-id')
+# @click.argument('msg_id')
+# def get_mail_by_id(msg_id):
+#     """
+#     Get Gmail message by msg_id
+#     """
+#     click.echo(f'Get Gmail messages by ID: {msg_id}')
+#     gmail_inbox = gmail.GmailInbox()
+#     msg = gmail_inbox.get_msg_by_id(msg_id=msg_id)
+
+
 @click.command(name='list-mail')
-@click.option('-s', '--query_subject', default='104應徵履歷 OR 透過104轉寄履歷', help='Gmail query subject match string.')
+@click.option('-s', '--query_subject', default='104應徵履歷 OR 透過104轉寄履歷',
+              help='Gmail query subject match string.')
 @click.option('-d', '--query_offset_days', default=14, type=int, help='Gmail query after timedelta days.')
 def list_gmail_subject_msgs(query_subject, query_offset_days):
     """
