@@ -11,6 +11,9 @@ logging_config.dictConfig(config.logging_config)
 # candidate = orm.candidate_mapper(msg_id, resume_104_html)
 # print(f'{candidate}')
 
-msg_id = '18fb8942e2590167'
-gml = gmail.GmailInbox()
-msg = gml.get_msg_by_id(msg_id=msg_id)
+if __name__ == '__main__':
+    # msg_id = '18fb8942e2590167'
+    msg_id = '1912c465d7f3090a'
+    gml = gmail.GmailInbox()
+    # msg = gml.get_msg_by_id(msg_id=msg_id)
+    gml.list_msg('104應徵履歷 OR 透過104轉寄履歷')

@@ -8,6 +8,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from datetime import datetime
 from chatgmail.config import get_gcp_credentials_file
 
 logger = logging.getLogger(__name__)
@@ -64,14 +65,15 @@ class GmailInbox(MailInbox):
 
     def get_msg_by_id(self, msg_id: str):
         service = self._build_gmail_service()
-        message = service.users().messages().get(
-            userId='me',
-            id=msg_id
-        )
-        if message:
-            pass
-        else:
-            pass
+        try:
+            message = service.users().messages().get(
+                userId='me',
+                id=msg_id
+            ).execute()
+            return message
+        except HttpError as error:
+            # TODO(developer) - Handle errors from gmail API.
+            logger.debug(f'An error occurred: {error}')
 
     def list_msg(self, subject, offset_days=7):
         """List the user's Gmail Inbox messages with the specified subject and offset days."""
@@ -97,6 +99,12 @@ class GmailInbox(MailInbox):
         msgs = []
         for msg in results.get('messages'):
             msg_id = msg.get('id')
+            thread_id = msg.get('threadId')
+            if thread_id != msg_id:
+                thread = service.users().threads().get(userId='me', id=thread_id).execute()
+                msgs_in_thread = thread.get('messages', [])
+                logger.debug(f'skip thread msg {thread_id} with msgs_in_thread {len(msgs_in_thread)}')
+                continue
             message = service.users().messages().get(userId='me', id=msg_id).execute()
             if not message:
                 logger.debug(f'no message for id {msg_id}')
@@ -107,6 +115,12 @@ class GmailInbox(MailInbox):
             # if str(msg_subject).find(subject) != 0:
             #     logger.debug(f'message subject not started with "{subject}", {msg_id}, {msg_subject}')
             #     continue
+
+            internal_date_timestamp = int(int(message['internalDate']) / 1000)  # 轉換為秒
+            # received_datetime = parsedate_to_datetime(str(internal_date_timestamp))
+            # receive_date = received_datetime.strftime('%Y-%m-%d')
+            dt_object = datetime.fromtimestamp(internal_date_timestamp)
+            receive_date = dt_object.strftime('%Y-%m-%d')
 
             try:
                 msg_body = base64.urlsafe_b64decode(message.get('payload').get('body').get('data')).decode("utf-8")
@@ -120,8 +134,8 @@ class GmailInbox(MailInbox):
                 # html_file = f'{msg_id}-{msg_subject}.html'
                 with open(html_file, 'w') as fh:
                     fh.write(msg_body)
-                logger.debug([msg_id, msg_subject, html_file])
-                msgs.append([msg_id, msg_subject, html_file])
+                logger.debug([msg_id, msg_subject, receive_date, html_file])
+                msgs.append([msg_id, msg_subject, receive_date, html_file])
             except Exception as e:
                 logger.error(f'error: {e}, {msg_id}, {msg_subject}')
                 continue
