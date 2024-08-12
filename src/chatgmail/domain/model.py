@@ -46,6 +46,9 @@ class Candidate:
 - 希望職稱：{self.desired_job_title}
 - 就業狀態：{self.employment_status}
 
+# 自我推薦
+{self.self_recommendation}
+
 # 工作經驗
 {_work_experiences}
 
