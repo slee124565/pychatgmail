@@ -163,6 +163,14 @@ def candidate_mapper(msg_id: str, resume_104_html: str) -> model.Candidate:
     soup = bs4.BeautifulSoup(resume_104_html, 'html.parser')
     dom = etree.HTML(str(soup))
 
+    # 找到所有符合「自我推薦」的 <div> 標籤
+    div_elements = soup.find_all("div", class_="py-1 font-16 inline-block mb-width-492 vtop")
+    _self_recommendation = div_elements[1].get_text().replace('\n', ' ')
+    # 遍歷所有的 <div> 元素並提取文本
+    # for idx, div in enumerate(div_elements):
+    #     text_content = div.get_text(separator="\n").strip()
+    #     print(f"內容 {idx + 1}:\n{text_content}\n")
+
     field_xpath_mapping = {
         'applied_position': '/html/body/table[2]/tbody/tr/td/table[1]/tbody/tr[2]/td/table/tbody/tr[1]/td/div[2]/a',
         'self_recommendation': '/html/body/table[2]/tbody/tr/td/table[1]/tbody/tr[2]/td/table/tbody/tr[2]/td/div[2]',
@@ -186,7 +194,8 @@ def candidate_mapper(msg_id: str, resume_104_html: str) -> model.Candidate:
     return model.Candidate(
         msg_id=msg_id,
         applied_position=_xpath_string_mapping(dom, field_xpath_mapping['applied_position']),
-        self_recommendation=_xpath_string_mapping(dom, field_xpath_mapping['self_recommendation']),
+        # self_recommendation=_xpath_string_mapping(dom, field_xpath_mapping['self_recommendation']),
+        self_recommendation=_self_recommendation,
         msg_receive_date=_xpath_string_mapping(dom, field_xpath_mapping['msg_received_date']),
         job_104_code=_xpath_string_mapping(dom, field_xpath_mapping['job_104_code']),
         name=_xpath_string_mapping(dom, field_xpath_mapping['name']) if _xpath_string_mapping(dom, field_xpath_mapping[
