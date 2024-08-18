@@ -8,6 +8,9 @@ logger = logging.getLogger(__name__)
 class Candidate:
     msg_id: str  # gmail message ID
     applied_position: str  # 應徵職務
+    preferred_position: str  # 希望職稱
+    # highest_education_level: str  # 最高學歷
+    self_introduction: str  # 個人簡介
     self_recommendation: str  # 自我推薦
     msg_receive_date: str  # 應徵快照：2023/03/09 09:34
     job_104_code: str  # 代碼：1689936700883
@@ -49,6 +52,12 @@ class Candidate:
 # 自我推薦
 {self.self_recommendation}
 
+# 希望職稱
+{self.preferred_position}
+
+# 自我簡介
+{self.self_introduction}
+
 # 工作經驗
 {_work_experiences}
 
@@ -75,6 +84,7 @@ class Candidate:
             'name': self.name,
             'age': self.age,
             'applied_position': self.applied_position,
+            'preferred_position': self.preferred_position,
             'msg_receive_date': self.msg_receive_date,
             'job_104_code': self.job_104_code,
             'education': f'{self.education[:80]}...',
@@ -89,6 +99,7 @@ class Candidate:
         _detail = {
             'msg_id': all([self.msg_id]),
             'applied_position': all([self.applied_position]),
+            'preferred_position': all([self.preferred_position]),
             'self_recommendation': all([self.self_recommendation]),
             'msg_receive_date': all([self.msg_receive_date]),
             'job_104_code': all([self.job_104_code]),
@@ -106,6 +117,7 @@ class Candidate:
                 self.msg_id,
                 # self.applied_position,
                 # self.self_recommendation,
+                self.preferred_position,
                 self.msg_receive_date,
                 self.job_104_code,
                 self.desired_job_title,
