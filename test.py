@@ -24,7 +24,9 @@ def check_msg(msg_id: str):
 
 if __name__ == '__main__':
     # msg_id = '18fb8942e2590167'
-    msg_id = '19154932940d00a3'
+    # msg_id = '19154932940d00a3'  # 轉寄履歷(完整)
+    # msg_id = '1916be45a4f48779'  # 配對信
+    msg_id = '1916e5660c6c5be8'  # 主動應徵履歷
     # gml = gmail.GmailInbox()
     # msg = gml.get_msg_by_id(msg_id=msg_id)
     # gml.list_msg('104應徵履歷 OR 透過104轉寄履歷')

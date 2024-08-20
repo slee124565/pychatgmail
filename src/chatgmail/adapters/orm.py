@@ -171,10 +171,24 @@ def candidate_mapper(msg_id: str, resume_104_html: str) -> model.Candidate:
     soup = bs4.BeautifulSoup(resume_104_html, 'html.parser')
     dom = etree.HTML(str(soup))
 
+    # 找到郵件 title 分類：配對信、轉寄履歷(完整)、主動應徵履歷
+    _title = soup.title.string.strip()
+
     # 找到所有符合「自我推薦」「轉寄」的 <div> 標籤
-    _search_class = 'px-5 pt-0 pb-0 text-left'  # py-1 font-16 inline-block mb-width-492 vtop
-    td_elements = soup.find_all("td", class_=_search_class)
-    _self_recommendation = td_elements[0].get_text().replace('\n', ' ')
+    _self_recommendation = ''
+    if _title == '主動應徵履歷':
+        # 查找包含 "自我推薦" 的 <div> 标签
+        self_intro_div = soup.find("div", string="自我推薦：")
+        # 找到相邻的 <div> 标签并提取其文本内容
+        if self_intro_div:
+            adjacent_div = self_intro_div.find_next("div", class_="py-1 font-16 inline-block mb-width-492 vtop")
+            if adjacent_div:
+                _self_recommendation = adjacent_div.get_text(strip=True)
+    else:
+        _search_class = 'px-5 pt-0 pb-0 text-left'  # py-1 font-16 inline-block mb-width-492 vtop
+        td_elements = soup.find_all("td", class_=_search_class)
+        _self_recommendation = td_elements[0].get_text().replace('\n', ' ')
+        _self_recommendation = f'{_title}:{_self_recommendation}'
 
     # 找到包含「希望職稱」的 th 元素，擷取所對應的實際字串
     _preferred_position = _soup_find_th_field_value(soup=soup, th_name='希望職稱')
