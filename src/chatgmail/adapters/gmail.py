@@ -75,9 +75,18 @@ class GmailInbox(MailInbox):
             # TODO(developer) - Handle errors from gmail API.
             logger.debug(f'An error occurred: {error}')
 
-    def list_msg(self, subject, offset_days=7):
+    def list_labels(self):
+        """List user's Gmail labels"""
+        service = self._build_gmail_service()
+        # 呼叫 users.labels.list 方法
+        results = service.users().labels().list(userId='me').execute()
+        labels = results.get('labels', [])
+        logger.debug(f'Gmail label IDs: {labels}')
+        return labels
+
+    def list_msg(self, subject, offset_days=7, label_ids='INBOX'):
         """List the user's Gmail Inbox messages with the specified subject and offset days."""
-        _gmail_query_labels = 'INBOX'
+        _gmail_query_labels = label_ids
         service = self._build_gmail_service()
         query = f'after:{(date.today() - timedelta(days=offset_days)).strftime("%Y/%m/%d")}'
         if subject.strip():

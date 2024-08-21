@@ -30,18 +30,32 @@ def chatgmailcli():
 #     gmail_inbox = gmail.GmailInbox()
 #     msg = gmail_inbox.get_msg_by_id(msg_id=msg_id)
 
+@click.command(name='list-labels')
+def list_gmail_labels():
+    """
+    List Gmail Labels based on User account.
+    """
+    click.echo(f'Listing user Gmail Labels')
+    gmail_inbox = gmail.GmailInbox()
+    labels = gmail_inbox.list_labels()
+    for label in labels:
+        assert isinstance(label, dict)
+        click.echo(f'ID: {label.get("id")}, NAME: {label.get("name")}, TYPE: {label.get("type")}')
+
 
 @click.command(name='list-mail')
-@click.option('-s', '--query_subject', default='104應徵履歷 OR 透過104轉寄履歷',
+@click.option('-s', '--query_subject', default='104應徵履歷 OR 透過104轉寄履歷 OR 104自訂配對人選',
               help='Gmail query subject match string.')
-@click.option('-d', '--query_offset_days', default=14, type=int, help='Gmail query after timedelta days.')
-def list_gmail_subject_msgs(query_subject, query_offset_days):
+@click.option('-d', '--query_offset_days', default=2, type=int, help='Gmail query after timedelta days.')
+@click.option('-l', '--gmail_label_ids', default='INBOX', help='Gmail label IDs.')
+def list_gmail_subject_msgs(query_subject, query_offset_days, gmail_label_ids):
     """
     List Gmail messages based on subject and offset-days.
     """
-    click.echo(f'Listing Gmail messages with subject: {query_subject} and offset days: {query_offset_days}')
+    click.echo(
+        f'Listing Gmail messages with sub: {query_subject} and days: {query_offset_days}, labels: {gmail_label_ids}...')
     gmail_inbox = gmail.GmailInbox()
-    msgs = gmail_inbox.list_msg(query_subject, query_offset_days)
+    msgs = gmail_inbox.list_msg(subject=query_subject, offset_days=query_offset_days, label_ids=gmail_label_ids)
     if msgs:
         for msg in msgs:
             click.echo(msg)
@@ -110,6 +124,7 @@ def analyze_mail(msg_id, prompt):
 
 
 # Adding commands to the group
+chatgmailcli.add_command(list_gmail_labels)
 chatgmailcli.add_command(list_gmail_subject_msgs)
 chatgmailcli.add_command(analyze_mail)
 chatgmailcli.add_command(check_gmail_msg)
