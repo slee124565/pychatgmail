@@ -1,6 +1,5 @@
-import json
 import os
-
+import shutil
 import click
 import dotenv
 import logging.config as logging_config
@@ -10,6 +9,9 @@ from chatgmail.adapters import gmail, orm
 dotenv.load_dotenv()
 logging_config.dictConfig(config.logging_config)
 GMAIL_MSG_FOLDER = os.getenv('GMAIL_MSG_FOLDER', '.gmail')
+PROCESSED_MSG_FOLDER = os.getenv('GMAIL_MSG_FOLDER', '.processed')
+DIGEST_MSG_FOLDER = os.getenv('GMAIL_MSG_FOLDER', '.mdigest')
+DIGEST2_MSG_FOLDER = os.getenv('GMAIL_MSG_FOLDER', '.m2digest')
 
 
 @click.group()
@@ -75,9 +77,25 @@ def check_gmail_msg(msg_id):
     # click.echo(f'{json.dumps(candidate.digest(), indent=2, ensure_ascii=False, default=str)}')
     candidate_md = candidate.to_markdown()
     click.echo(candidate_md)
-    _file = f'./{GMAIL_MSG_FOLDER}/{msg_id}.md'
+    if not os.path.exists(PROCESSED_MSG_FOLDER):
+        os.makedirs(PROCESSED_MSG_FOLDER)
+
+    if not os.path.exists(DIGEST_MSG_FOLDER):
+        os.makedirs(DIGEST_MSG_FOLDER)
+    _file = f'./{DIGEST_MSG_FOLDER}/{msg_id}.md'
     with open(_file, 'w', encoding='utf-8') as file:
         file.write(candidate_md)
+
+    if not os.path.exists(DIGEST2_MSG_FOLDER):
+        os.makedirs(DIGEST2_MSG_FOLDER)
+    _file = f'./{DIGEST2_MSG_FOLDER}/{msg_id}-{candidate.msg_receive_date}-{candidate.name}.md'
+    _file = os.path.join('./', DIGEST2_MSG_FOLDER, f'{msg_id}-{candidate.msg_receive_date}-{candidate.name}.md')
+    with open(_file, 'w', encoding='utf-8') as file:
+        file.write(candidate_md)
+
+    # source_file = f'./{GMAIL_MSG_FOLDER}/{msg_id}.html'
+    # destination_folder = f'./{PROCESSED_MSG_FOLDER}'
+    # shutil.move(source_file, destination_folder)
 
 
 @click.command(name='check-all-mail', help='Check all the email messages in the cache folder.')
