@@ -132,5 +132,7 @@ dmypy.json
 credentials.json
 token.json
 .gmail/
+.processed/
+.mdigest/
 *.log.*
 .DS_Store
