@@ -132,25 +132,50 @@ def check_gmail_msg_all(query_applied_job):
         #     click.echo(f'\n** skipping file: {msg_file} **\n')
 
 
-@click.command(name='analyze-mail')
-@click.argument('msg_id')
-@click.argument('prompt')
-def analyze_mail(msg_id, prompt):
+@click.command(name='nav-q')
+def nav_q_msgs():
     """
-    Analyze the content of specified email messages.
+    Navigate last gmail query results
     """
-    msg_html = gmail.read_msg_from_cache(msg_id)
-    candidate = orm.candidate_mapper(msg_id, msg_html)
-    if not candidate.validate():
-        click.echo(f'Invalid candidate: {candidate}')
+    if not os.path.exists(MSG_QUERY_CACHE_FILE):
+        click.echo(f'No last query result exists')
         return
-    candidate_md = candidate.to_markdown()
+
+    with open(MSG_QUERY_CACHE_FILE, 'r') as fh:
+        _q = json.loads(fh.read())
+
+    if not len(_q):
+        click.echo(f'Last query result empty')
+        return
+
+    assert isinstance(_q, list)
+    _n = 0
+    while True:
+        msg_id, _, _, _ = _q[_n]
+        check_gmail_msg.callback(msg_id)
+        click.echo(f'===== {_n+1}/{len(_q)} ====')
+        click.echo(f'<n>: next msg')
+        click.echo(f'<p>: prev msg')
+        click.echo(f'<q> to exit')
+        choice = click.prompt('cmd ?', type=str)
+        if choice == 'n':
+            _n += 1
+            if _n >= len(_q):
+                _n = 0
+        elif choice == 'p':
+            _n -= 1
+            if _n < 0:
+                _n = len(_q) - 1
+        elif choice == 'q':
+            break
+        else:
+            pass
 
 
 # Adding commands to the group
 chatgmailcli.add_command(list_gmail_labels)
 chatgmailcli.add_command(list_gmail_subject_msgs)
-chatgmailcli.add_command(analyze_mail)
+chatgmailcli.add_command(nav_q_msgs)
 chatgmailcli.add_command(check_gmail_msg)
 chatgmailcli.add_command(check_gmail_msg_all)
 
