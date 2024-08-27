@@ -135,5 +135,6 @@ token.json
 .processed/
 .mdigest/
 .q
+.candidates
 *.log.*
 .DS_Store

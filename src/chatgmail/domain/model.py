@@ -87,10 +87,11 @@ class Candidate:
             'age': self.age,
             'applied_position': self.applied_position,
             'preferred_position': self.preferred_position,
-            'msg_receive_date': self.msg_receive_date,
+            'receive_date': self.msg_receive_date,
             'job_104_code': self.job_104_code,
-            'education': f'{self.education[:80]}...',
-            'work_experiences': _exs,
+            'edu': f'{self.education[:80]}...',
+            'work': _exs,
+            'skills': f'{self.specialized_skills}'
         }
         return _digest
 

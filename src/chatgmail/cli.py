@@ -15,7 +15,8 @@ DIGEST2_MSG_FOLDER = os.getenv('GMAIL_MSG_FOLDER', '.m2digest')
 MSG_QUERY_SUBJECT = os.getenv('MSG_QUERY_SUBJECT', '104應徵履歷 OR 透過104轉寄履歷 OR 104自訂配對人選')
 MSG_QUERY_DAYS = os.getenv('MSG_QUERY_DAYS', 1)
 MSG_QUERY_LABELS = os.getenv('MSG_QUERY_LABELS', 'INBOX')
-MSG_QUERY_CACHE_FILE = os.getenv('MSG_QUERY_CACHE_FILE', '.q')
+MSG_QUERY_CACHE_FILE = '.q'
+CANDIDATES_CACHED_FILE = '.candidates'
 
 
 @click.group()
@@ -132,6 +133,13 @@ def check_gmail_msg_all(query_applied_job):
         #     click.echo(f'\n** skipping file: {msg_file} **\n')
 
 
+def _print_candidate_digest(msg_id: str):
+    msg_html = gmail.read_msg_from_cache(msg_id)
+    candidate = orm.candidate_mapper(msg_id, msg_html)
+    click.clear()
+    click.echo(json.dumps(candidate.digest(), indent=2, ensure_ascii=False))
+
+
 @click.command(name='nav-q')
 def nav_q_msgs():
     """
@@ -150,22 +158,40 @@ def nav_q_msgs():
 
     assert isinstance(_q, list)
     _n = 0
+    msg_id, _, _, _ = _q[_n]
+    _print_candidate_digest(msg_id)
     while True:
-        msg_id, _, _, _ = _q[_n]
-        check_gmail_msg.callback(msg_id)
-        click.echo(f'===== {_n+1}/{len(_q)} ====')
+        click.echo(f'===== {_n + 1}/{len(_q)} ====')
         click.echo(f'<n>: next msg')
         click.echo(f'<p>: prev msg')
+        click.echo(f'<1>-<{len(_q)}>: jump msg')
+        click.echo(f'<d>: detail msg')
+        click.echo(f'<s>: save msg info')
         click.echo(f'<q> to exit')
         choice = click.prompt('cmd ?', type=str)
+
         if choice == 'n':
-            _n += 1
-            if _n >= len(_q):
-                _n = 0
+            _n = 0 if _n+1 >= len(_q) else _n+1
+            msg_id, _, _, _ = _q[_n]
+            _print_candidate_digest(msg_id)
         elif choice == 'p':
-            _n -= 1
-            if _n < 0:
-                _n = len(_q) - 1
+            _n = len(_q)-1 if _n-1 < 0 else _n-1
+            msg_id, _, _, _ = _q[_n]
+            _print_candidate_digest(msg_id)
+        elif choice == 'd':
+            click.clear()
+            check_gmail_msg.callback(msg_id)
+        elif f'{choice}'.isdigit():
+            if 1 <= int(choice) <= len(_q):
+                _n = int(choice) - 1
+                msg_id, _, _, _ = _q[_n]
+                _print_candidate_digest(msg_id)
+            else:
+                click.echo(f'Digit number invalid')
+        elif choice == 's':
+            with open(CANDIDATES_CACHED_FILE, 'a', encoding='utf-8') as fh:
+                fh.write(f'{_q[_n]}\n')
+            click.echo(f'saved {_q[_n]} into {CANDIDATES_CACHED_FILE}')
         elif choice == 'q':
             break
         else:

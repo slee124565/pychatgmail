@@ -171,6 +171,24 @@ def candidate_mapper(msg_id: str, resume_104_html: str) -> model.Candidate:
     soup = bs4.BeautifulSoup(resume_104_html, 'html.parser')
     dom = etree.HTML(str(soup))
 
+    field_xpath_mapping = {
+        'applied_position': '/html/body/table[2]/tbody/tr/td/table[1]/tbody/tr[2]/td/table/tbody/tr[1]/td/div[2]/a',
+        'matched_position': '/html/body/table[2]/tbody/tr/td/table[1]/tbody/tr[2]/td/table/tbody/tr[1]/td/div[2]/a',
+        # 'self_recommendation': '/html/body/table[2]/tbody/tr/td/table[1]/tbody/tr[2]/td/table/tbody/tr[2]/td/div[2]',
+        'self_recommendation': '/html/body/table[2]/tbody/tr/td/table[1]/tbody/tr[2]/td',
+        'msg_received_date': '/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[2]/text()[1]',
+        'job_104_code': '/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[2]/text()[2]',
+        'job_104_code_matched': '/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[2]',
+        'name': "/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/b/a/span",
+        'name2': "/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/a/b",
+        # /html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/b/a/span
+        # /html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/a/b
+        'age': '/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/text()[1]',
+        'gender': '/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/text()[2]',
+        'desired_job_title': '/html/body/table[2]/tbody/tr/td/table[3]/tbody/tr[2]/td/div[2]/table/tbody/tr[2]/td',
+        'employment_status': '/html/body/table[2]/tbody/tr/td/table[5]/tbody/tr[1]/td',
+    }
+
     # 找到郵件 title 分類：配對信、轉寄履歷(完整)、主動應徵履歷
     _title = soup.title.string.strip()
 
@@ -184,33 +202,20 @@ def candidate_mapper(msg_id: str, resume_104_html: str) -> model.Candidate:
             adjacent_div = self_intro_div.find_next("div", class_="py-1 font-16 inline-block mb-width-492 vtop")
             if adjacent_div:
                 _self_recommendation = adjacent_div.get_text(strip=True)
+        _msg_receive_date = _xpath_string_mapping(dom, field_xpath_mapping['msg_received_date'])
+        _job_104_code = _xpath_string_mapping(dom, field_xpath_mapping['job_104_code'])
     else:
         _search_class = 'px-5 pt-0 pb-0 text-left'  # py-1 font-16 inline-block mb-width-492 vtop
         td_elements = soup.find_all("td", class_=_search_class)
-        _self_recommendation = td_elements[0].get_text().replace('\n', ' ')
+        _self_recommendation = td_elements[0].get_text().replace('\n', ' ') if len(td_elements) else ''
         _self_recommendation = f'{_title}:{_self_recommendation}'
+        _msg_receive_date = ''
+        _job_104_code = _xpath_string_mapping(dom, field_xpath_mapping['job_104_code_matched'])
 
     # 找到包含「希望職稱」的 th 元素，擷取所對應的實際字串
     _preferred_position = _soup_find_th_field_value(soup=soup, th_name='希望職稱')
     _highest_education_level = _soup_find_th_field_value(soup=soup, th_name='最高學歷')
     _self_introduction = _soup_find_th_field_value(soup=soup, th_name='個人簡介')
-
-    field_xpath_mapping = {
-        'applied_position': '/html/body/table[2]/tbody/tr/td/table[1]/tbody/tr[2]/td/table/tbody/tr[1]/td/div[2]/a',
-        'matched_position': '/html/body/table[2]/tbody/tr/td/table[1]/tbody/tr[2]/td/table/tbody/tr[1]/td/div[2]/a',
-        # 'self_recommendation': '/html/body/table[2]/tbody/tr/td/table[1]/tbody/tr[2]/td/table/tbody/tr[2]/td/div[2]',
-        'self_recommendation': '/html/body/table[2]/tbody/tr/td/table[1]/tbody/tr[2]/td',
-        'msg_received_date': '/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[2]/text()[1]',
-        'job_104_code': '/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[2]/text()[2]',
-        'name': "/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/b/a/span",
-        'name2': "/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/a/b",
-        # /html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/b/a/span
-        # /html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/a/b
-        'age': '/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/text()[1]',
-        'gender': '/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[1]/text()[2]',
-        'desired_job_title': '/html/body/table[2]/tbody/tr/td/table[3]/tbody/tr[2]/td/div[2]/table/tbody/tr[2]/td',
-        'employment_status': '/html/body/table[2]/tbody/tr/td/table[5]/tbody/tr[1]/td',
-    }
 
     key_contents = _xpath_key_table_mapping(dom)
     # '工作經歷': work_experiences,
@@ -224,8 +229,8 @@ def candidate_mapper(msg_id: str, resume_104_html: str) -> model.Candidate:
         # self_recommendation=_xpath_string_mapping(dom, field_xpath_mapping['self_recommendation']),
         self_recommendation=_self_recommendation,
         self_introduction=_self_introduction,
-        msg_receive_date=_xpath_string_mapping(dom, field_xpath_mapping['msg_received_date']),
-        job_104_code=_xpath_string_mapping(dom, field_xpath_mapping['job_104_code']),
+        msg_receive_date=_msg_receive_date,
+        job_104_code=_job_104_code,
         name=_xpath_string_mapping(dom, field_xpath_mapping['name']) if _xpath_string_mapping(dom, field_xpath_mapping[
             'name']) else _xpath_string_mapping(dom, field_xpath_mapping['name2']),
         age=_xpath_string_mapping(dom, field_xpath_mapping['age']),
