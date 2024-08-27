@@ -40,9 +40,11 @@ class Candidate:
         else:
             _work_experiences = self.work_experiences
         _md = f"""
-# {self.name} ({self.job_104_code}) 應徵職務：{self.applied_position}
+# {self.name} ({self.job_104_code}) 
 
-## 基本資料
+# 應徵職務：{self.applied_position}
+
+# 基本資料
 - 年齡：{self.age}
 - 性別：{self.gender}
 - 應徵快照：{self.msg_receive_date}

@@ -12,6 +12,9 @@ GMAIL_MSG_FOLDER = os.getenv('GMAIL_MSG_FOLDER', '.gmail')
 PROCESSED_MSG_FOLDER = os.getenv('GMAIL_MSG_FOLDER', '.processed')
 DIGEST_MSG_FOLDER = os.getenv('GMAIL_MSG_FOLDER', '.mdigest')
 DIGEST2_MSG_FOLDER = os.getenv('GMAIL_MSG_FOLDER', '.m2digest')
+MSG_QUERY_SUBJECT = os.getenv('MSG_QUERY_SUBJECT', '104應徵履歷 OR 透過104轉寄履歷 OR 104自訂配對人選')
+MSG_QUERY_DAYS = os.getenv('MSG_QUERY_DAYS', 1)
+MSG_QUERY_LABELS = os.getenv('MSG_QUERY_LABELS', 'INBOX')
 
 
 @click.group()
@@ -46,10 +49,10 @@ def list_gmail_labels():
 
 
 @click.command(name='list-mail')
-@click.option('-s', '--query_subject', default='104應徵履歷 OR 透過104轉寄履歷 OR 104自訂配對人選',
-              help='Gmail query subject match string.')
-@click.option('-d', '--query_offset_days', default=2, type=int, help='Gmail query after timedelta days.')
-@click.option('-l', '--gmail_label_ids', default='INBOX', help='Gmail label IDs.')
+@click.option('-s', '--query_subject', default=MSG_QUERY_SUBJECT, help='Gmail query subject match string.')
+@click.option('-d', '--query_offset_days', default=MSG_QUERY_DAYS, type=int,
+              help='Gmail query after timedelta days.')
+@click.option('-l', '--gmail_label_ids', default=MSG_QUERY_LABELS, help='Gmail label IDs.')
 def list_gmail_subject_msgs(query_subject, query_offset_days, gmail_label_ids):
     """
     List Gmail messages based on subject and offset-days.

@@ -197,6 +197,7 @@ def candidate_mapper(msg_id: str, resume_104_html: str) -> model.Candidate:
 
     field_xpath_mapping = {
         'applied_position': '/html/body/table[2]/tbody/tr/td/table[1]/tbody/tr[2]/td/table/tbody/tr[1]/td/div[2]/a',
+        'matched_position': '/html/body/table[2]/tbody/tr/td/table[1]/tbody/tr[2]/td/table/tbody/tr[1]/td/div[2]/a',
         # 'self_recommendation': '/html/body/table[2]/tbody/tr/td/table[1]/tbody/tr[2]/td/table/tbody/tr[2]/td/div[2]',
         'self_recommendation': '/html/body/table[2]/tbody/tr/td/table[1]/tbody/tr[2]/td',
         'msg_received_date': '/html/body/table[2]/tbody/tr/td/table[2]/tbody/tr[2]/td/div[2]/text()[1]',
