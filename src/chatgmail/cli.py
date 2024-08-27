@@ -1,5 +1,5 @@
 import os
-import shutil
+import json
 import click
 import dotenv
 import logging.config as logging_config
@@ -15,6 +15,7 @@ DIGEST2_MSG_FOLDER = os.getenv('GMAIL_MSG_FOLDER', '.m2digest')
 MSG_QUERY_SUBJECT = os.getenv('MSG_QUERY_SUBJECT', '104應徵履歷 OR 透過104轉寄履歷 OR 104自訂配對人選')
 MSG_QUERY_DAYS = os.getenv('MSG_QUERY_DAYS', 1)
 MSG_QUERY_LABELS = os.getenv('MSG_QUERY_LABELS', 'INBOX')
+MSG_QUERY_CACHE_FILE = os.getenv('MSG_QUERY_CACHE_FILE', '.q')
 
 
 @click.group()
@@ -61,6 +62,8 @@ def list_gmail_subject_msgs(query_subject, query_offset_days, gmail_label_ids):
         f'Listing Gmail messages with sub: {query_subject} and days: {query_offset_days}, labels: {gmail_label_ids}...')
     gmail_inbox = gmail.GmailInbox()
     msgs = gmail_inbox.list_msg(subject=query_subject, offset_days=query_offset_days, label_ids=gmail_label_ids)
+    with open(MSG_QUERY_CACHE_FILE, 'w') as fh:
+        fh.write(json.dumps(msgs, indent=2, ensure_ascii=False))
     if msgs:
         for msg in msgs:
             click.echo(msg)
@@ -92,9 +95,9 @@ def check_gmail_msg(msg_id):
     if not os.path.exists(DIGEST2_MSG_FOLDER):
         os.makedirs(DIGEST2_MSG_FOLDER)
     _file = f'./{DIGEST2_MSG_FOLDER}/{msg_id}-{candidate.msg_receive_date}-{candidate.name}.md'
-    _file = os.path.join('./', DIGEST2_MSG_FOLDER, f'{msg_id}-{candidate.msg_receive_date}-{candidate.name}.md')
-    with open(_file, 'w', encoding='utf-8') as file:
-        file.write(candidate_md)
+    # _file = os.path.join('./', DIGEST2_MSG_FOLDER, f'{msg_id}-{candidate.msg_receive_date}-{candidate.name}.md')
+    # with open(_file, 'w', encoding='utf-8') as file:
+    #     file.write(candidate_md)
 
     # source_file = f'./{GMAIL_MSG_FOLDER}/{msg_id}.html'
     # destination_folder = f'./{PROCESSED_MSG_FOLDER}'

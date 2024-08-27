@@ -90,7 +90,7 @@ class GmailInbox(MailInbox):
         service = self._build_gmail_service()
         query = f'after:{(date.today() - timedelta(days=offset_days)).strftime("%Y/%m/%d")}'
         if subject.strip():
-            query = f'subject:({subject}) AND {query}'
+            query = f'subject:("{subject}") AND {query}'
         logger.debug(f'Gmail Inbox query with {query}')
 
         results = service.users().messages().list(
