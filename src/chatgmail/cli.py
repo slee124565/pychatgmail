@@ -62,7 +62,19 @@ def list_gmail_subject_msgs(query_subject, query_offset_days, gmail_label_ids):
     click.echo(
         f'Listing Gmail messages with sub: {query_subject} and days: {query_offset_days}, labels: {gmail_label_ids}...')
     gmail_inbox = gmail.GmailInbox()
-    msgs = gmail_inbox.list_msg(subject=query_subject, offset_days=query_offset_days, label_ids=gmail_label_ids)
+    labels = gmail_inbox.list_labels()
+    _ids = set()
+    for _id in f'{gmail_label_ids}'.split(','):
+        _ids.add(next((label.get('id') for label in labels if label.get('id') == _id), None))
+    for _id in f'{gmail_label_ids}'.split(','):
+        _ids.add(next((label.get('id') for label in labels if label.get('name') == _id), None))
+
+    # 移除 None 元素
+    _elements = {_e for _e in _ids if _e is not None}
+    _ids = ','.join(map(str, _elements))
+
+    # click.echo(f'{_ids}')
+    msgs = gmail_inbox.list_msg(subject=query_subject, offset_days=query_offset_days, label_ids=_ids)
     with open(MSG_QUERY_CACHE_FILE, 'w') as fh:
         fh.write(json.dumps(msgs, indent=2, ensure_ascii=False))
     if msgs:
@@ -171,11 +183,11 @@ def nav_q_msgs():
         choice = click.prompt('cmd ?', type=str)
 
         if choice == 'n':
-            _n = 0 if _n+1 >= len(_q) else _n+1
+            _n = 0 if _n + 1 >= len(_q) else _n + 1
             msg_id, _, _, _ = _q[_n]
             _print_candidate_digest(msg_id)
         elif choice == 'p':
-            _n = len(_q)-1 if _n-1 < 0 else _n-1
+            _n = len(_q) - 1 if _n - 1 < 0 else _n - 1
             msg_id, _, _, _ = _q[_n]
             _print_candidate_digest(msg_id)
         elif choice == 'd':
