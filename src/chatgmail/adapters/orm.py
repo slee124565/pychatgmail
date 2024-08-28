@@ -97,7 +97,28 @@ def _xpath_key_table_mapping(dom: etree.HTML) -> dict:
     # 使用 min 函数确保在 contents 为奇数长度时不会出现索引越界
     for i in range(0, min(len(experiences), len(experiences) - len(experiences) % 2), 2):
         # 格式化字符串并添加到新的列表中
-        work_experience = f'曾經任職公司：{experiences[i]} ，當時的工作內容：{experiences[i + 1]}'
+
+        # 檢查關鍵字是否存在
+        skill_keyword = "工作技能"
+        content_keyword = "工作內容"
+
+        _experience = experiences[i + 1]
+        skill_index = _experience.find(skill_keyword)
+        content_index = _experience.find(content_keyword)
+
+        # 如果兩個關鍵字都存在，擷取「工作技能」字串（包含）之後的內容
+        if skill_index != -1 and content_index != -1:
+            _experience = _experience[skill_index:]
+
+        # 如果只有「工作內容」存在，擷取「工作內容」字串（包含）之後的內容
+        elif skill_index == -1 and content_index != -1:
+            _experience = _experience[content_index:]
+
+        # 如果兩個關鍵字都不存在，直接回覆原始字串
+        else:
+            pass
+
+        work_experience = f'曾經任職公司：{experiences[i]} ，當時的{_experience}'
         work_experiences.append(work_experience)
 
     # 如果 contents 的长度为奇数，处理最后一个元素

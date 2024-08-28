@@ -79,8 +79,10 @@ class Candidate:
 
     def digest(self) -> dict:
         assert isinstance(self.work_experiences, list), f'work_experiences is not a list: {self.work_experiences}'
-        _exs = []
-        _work_ex_tmp = [_exs.append(f'{ex[:80]}...') for ex in self.work_experiences]
+        _max = 3
+        _total = len(self.work_experiences)
+        _n = _total if _total < _max else _max
+        _exs = [f'{ex[:350]}...' for ex in self.work_experiences[:_n]]
         _digest = {
             'msg_id': self.msg_id,
             'name': self.name,
@@ -90,9 +92,9 @@ class Candidate:
             'receive_date': self.msg_receive_date,
             'job_104_code': self.job_104_code,
             'edu': f'{self.education[:80]}...',
-            'work': _exs,
-            'skills': f'{self.specialized_skills}',
-            'bio': f'\n{self.autobiography[:350]} ...'
+            f'work ({_n}/{_total})': _exs,
+            'skills': f'{self.specialized_skills[:350]} ...',
+            'bio': f'{self.autobiography[:350]} ...'
         }
         return _digest
 
