@@ -91,7 +91,8 @@ class Candidate:
             'job_104_code': self.job_104_code,
             'edu': f'{self.education[:80]}...',
             'work': _exs,
-            'skills': f'{self.specialized_skills}'
+            'skills': f'{self.specialized_skills}',
+            'bio': f'\n{self.autobiography[:350]} ...'
         }
         return _digest
 
