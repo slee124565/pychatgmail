@@ -98,13 +98,7 @@ class GmailInbox(MailInbox):
         subject = headers.get('Subject', 'No Subject')
 
         # 取得郵件主體
-        # parts = message['payload'].get('parts', [])
-        # body_html = ""
-        # for part in parts:
-        #     if part['mimeType'] == 'text/html':
-        #         body_html = base64.urlsafe_b64decode(part['body']['data']).decode('utf-8')
-        #         break
-        body_html = body_html = base64.urlsafe_b64decode(message['payload']['body']['data']).decode('utf-8')
+        body_html = base64.urlsafe_b64decode(message['payload']['body']['data']).decode('utf-8')
 
         # 建立新的郵件
         new_subject = f"Fwd: {subject}"
