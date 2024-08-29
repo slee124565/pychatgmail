@@ -210,10 +210,21 @@ def nav_q_msgs():
             pass
 
 
+@click.command('fwd')
+@click.argument('msg_id')
+@click.argument('addresses')
+def fwd_gmail_msg(msg_id, addresses):
+    """Forward a Gmail message to specified email addresses."""
+    gmail_inbox = gmail.GmailInbox()
+    fwd_msg_id = gmail_inbox.fwd_msg(msg_id, f'{addresses}'.split(','))
+    click.echo(f'msg_id {msg_id} forward to {addresses}, {fwd_msg_id}')
+
+
 # Adding commands to the group
 chatgmailcli.add_command(list_gmail_labels)
 chatgmailcli.add_command(list_gmail_subject_msgs)
 chatgmailcli.add_command(nav_q_msgs)
+chatgmailcli.add_command(fwd_gmail_msg)
 chatgmailcli.add_command(check_gmail_msg)
 chatgmailcli.add_command(check_gmail_msg_all)
 
