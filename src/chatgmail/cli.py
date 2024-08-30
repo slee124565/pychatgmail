@@ -2,6 +2,8 @@ import os
 import json
 import click
 import dotenv
+import subprocess
+import platform
 import logging.config as logging_config
 from chatgmail import config
 from chatgmail.adapters import gmail, orm
@@ -78,8 +80,11 @@ def list_gmail_subject_msgs(query_subject, query_offset_days, gmail_label_ids):
     with open(MSG_QUERY_CACHE_FILE, 'w') as fh:
         fh.write(json.dumps(msgs, indent=2, ensure_ascii=False))
     if msgs:
+        click.clear()
         for msg in msgs:
             click.echo(msg)
+        click.echo('=====')
+        click.echo(f'total: {len(msgs)}')
     else:
         click.echo('No matched messages found.')
 
@@ -178,6 +183,7 @@ def nav_q_msgs():
         click.echo(f'<p>: prev msg')
         click.echo(f'<1>-<{len(_q)}>: jump msg')
         click.echo(f'<d>: detail msg')
+        click.echo(f'<o>: open msg 104 html')
         click.echo(f'<s>: save msg info')
         click.echo(f'<q> to exit')
         choice = click.prompt('cmd ?', type=str)
@@ -200,6 +206,14 @@ def nav_q_msgs():
                 _print_candidate_digest(msg_id)
             else:
                 click.echo(f'Digit number invalid')
+        elif choice == 'o':
+            _html_file = gmail.get_msg_cache_html_file_by_id(msg_id)
+            if platform.system() == 'Windows':
+                subprocess.run(['start', _html_file], shell=True)
+            elif platform.system() == 'Darwin':  # macOS
+                subprocess.run(['open', _html_file])
+            else:  # Linux
+                subprocess.run(['xdg-open', _html_file])
         elif choice == 's':
             with open(CANDIDATES_CACHED_FILE, 'a', encoding='utf-8') as fh:
                 fh.write(f'{_q[_n]}\n')

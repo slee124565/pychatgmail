@@ -20,11 +20,15 @@ SCOPES = ['https://www.googleapis.com/auth/gmail.readonly',
           'https://www.googleapis.com/auth/gmail.compose']
 
 
+def get_msg_cache_html_file_by_id(msg_id: str) -> str:
+    return os.path.join('.gmail', f'{msg_id}.html')
+
+
 def read_msg_from_cache(msg_id: str) -> str:
     """
     Read the email message from cache file.
     """
-    cache_file = os.path.join('.gmail', f'{msg_id}.html')
+    cache_file = get_msg_cache_html_file_by_id(msg_id=msg_id)
     with open(cache_file, 'r', encoding='utf-8') as file:
         return file.read()
 
