@@ -6,6 +6,7 @@ from datetime import date, timedelta, datetime, timezone
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from google.auth.transport.requests import Request
+from google.auth.exceptions import RefreshError
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
@@ -14,10 +15,12 @@ from chatgmail.config import get_gcp_credentials_file
 
 logger = logging.getLogger(__name__)
 # If modifying these scopes, delete the file token.json.
-SCOPES = ['https://www.googleapis.com/auth/gmail.readonly',
-          'https://www.googleapis.com/auth/gmail.send',
-          'https://www.googleapis.com/auth/gmail.modify',
-          'https://www.googleapis.com/auth/gmail.compose']
+SCOPES = [
+    'https://www.googleapis.com/auth/gmail.readonly',
+    'https://www.googleapis.com/auth/gmail.send',
+    'https://www.googleapis.com/auth/gmail.modify',
+    'https://www.googleapis.com/auth/gmail.compose'
+]
 
 
 def get_msg_cache_html_file_by_id(msg_id: str) -> str:
@@ -40,10 +43,36 @@ class MailInbox(abc.ABC):
         """Lists the user's Gmail labels."""
 
 
+def get_credentials():
+    """從客戶端密鑰檔案中取得新的憑證並啟動本地伺服器進行授權。"""
+    _client_secret_file = get_gcp_credentials_file()
+    flow = InstalledAppFlow.from_client_secrets_file(_client_secret_file, SCOPES)
+    return flow.run_local_server(port=0)
+
+
+def save_credentials(creds):
+    """將憑證儲存到本地檔案中。"""
+    with open('token.json', 'w') as token:
+        token.write(creds.to_json())
+
+
+def refresh_or_get_credentials(creds):
+    """檢查並更新或重新取得憑證。"""
+    if creds and creds.expired and creds.refresh_token:
+        try:
+            creds.refresh(Request())
+        except RefreshError as err:
+            logger.debug(f'RefreshError: {err}')
+            creds = get_credentials()
+    else:
+        creds = get_credentials()
+    save_credentials(creds)
+    return creds
+
+
 class GmailInbox(MailInbox):
     @staticmethod
     def _build_gmail_service():
-        _client_secret_file = get_gcp_credentials_file()
 
         creds = None
         # The file token.json stores the user's access and refresh tokens, and is
@@ -51,17 +80,28 @@ class GmailInbox(MailInbox):
         # time.
         if os.path.exists('token.json'):
             creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    _client_secret_file, SCOPES)
-                creds = flow.run_local_server(port=0)
-            # Save the credentials for the next run
-            with open('token.json', 'w') as token:
-                token.write(creds.to_json())
+            creds = refresh_or_get_credentials(creds)
+
+        # if not creds or not creds.valid:
+        #     if creds and creds.expired and creds.refresh_token:
+        #         try:
+        #             creds.refresh(Request())
+        #         except RefreshError as err:
+        #             logger.debug(f'RefreshError: {err}')
+        #             flow = InstalledAppFlow.from_client_secrets_file(
+        #                 _client_secret_file, SCOPES)
+        #             creds = flow.run_local_server(port=0)
+        #
+        #     else:
+        #         flow = InstalledAppFlow.from_client_secrets_file(
+        #             _client_secret_file, SCOPES)
+        #         creds = flow.run_local_server(port=0)
+        #     # Save the credentials for the next run
+        #     with open('token.json', 'w') as token:
+        #         token.write(creds.to_json())
 
         try:
             # Call the Gmail API
