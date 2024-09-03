@@ -52,6 +52,15 @@ def list_gmail_labels():
         click.echo(f'ID: {label.get("id")}, NAME: {label.get("name")}, TYPE: {label.get("type")}')
 
 
+@click.command(name='group-label-sub')
+@click.option('-d', '--query_offset_days', default=MSG_QUERY_DAYS, type=int,
+              help='Gmail query after timedelta days.')
+@click.option('-l', '--gmail_label_ids', default=MSG_QUERY_LABELS, help='Gmail label IDs.')
+def group_gmail_subject_digest(query_offset_days, gmail_lable_ids):
+    """todo: Group Gmail messages subject digest( `】`) as data set"""
+    click.echo(f'Group Gmail messages in `{gmail_lable_ids}` subject digest( `】`) as data set')
+    raise NotImplementedError
+
 @click.command(name='list-mail')
 @click.option('-s', '--query_subject', default=MSG_QUERY_SUBJECT, help='Gmail query subject match string.')
 @click.option('-d', '--query_offset_days', default=MSG_QUERY_DAYS, type=int,
