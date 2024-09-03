@@ -68,13 +68,26 @@ def group_gmail_subject_digest(query_offset_days, gmail_lable_ids):
 @click.option('-d', '--query_offset_days', default=MSG_QUERY_DAYS, type=int,
               help='Gmail query after timedelta days.')
 @click.option('-l', '--gmail_label_ids', default=MSG_QUERY_LABELS, help='Gmail label IDs.')
-def list_gmail_sub_menu_msgs(query_menu: str, query_offset_days: int, gmail_label_ids:str):
+def list_gmail_sub_menu_msgs(query_menu: str, query_offset_days: int, gmail_label_ids: str):
     """
     todo: List Gmail messages based on subject menu and offset-days.
     """
-    click.echo(
-        f'Listing Gmail messages with sub: {query_menu} and days: {query_offset_days}, labels: {gmail_label_ids}...')
-
+    _options = query_menu.split(',')
+    if not len(_options):
+        click.echo(f'No query options exist in env var MSG_QUERY_SUB_OPTIONS `{MSG_QUERY_SUB_OPTIONS}`')
+        return
+    while True:
+        for i, o in enumerate(_options):
+            click.echo(f'{i + 1}: query subject {o}')
+        click.echo(f'press <enter> to exit')
+        choice = click.prompt(f'choice? 1-{len(_options)}', default='')
+        if f'{choice}'.isdigit() and 0 < int(choice) <= len(_options):
+            _subject = _options[int(choice)-1]
+            list_gmail_subject_msgs.callback(_subject, query_offset_days, gmail_label_ids)
+        elif choice == '':
+            break
+        else:
+            click.echo(f'Invalid option number enter')
 
 
 @click.command(name='list-mail')
@@ -210,8 +223,8 @@ def nav_q_msgs():
         click.echo(f'<d>: detail msg')
         click.echo(f'<o>: open msg 104 html')
         click.echo(f'<s>: save msg info')
-        click.echo(f'<q> to exit')
-        choice = click.prompt('cmd ?', type=str)
+        click.echo(f'<enter> to exit')
+        choice = click.prompt('cmd ?', type=str, default='')
 
         if choice == 'n':
             _n = 0 if _n + 1 >= len(_q) else _n + 1
@@ -243,9 +256,10 @@ def nav_q_msgs():
             with open(CANDIDATES_CACHED_FILE, 'a', encoding='utf-8') as fh:
                 fh.write(f'{_q[_n]}\n')
             click.echo(f'saved {_q[_n]} into {CANDIDATES_CACHED_FILE}')
-        elif choice == 'q':
+        elif choice == '':
             break
         else:
+            click.echo('Invalid cmd')
             pass
 
 
@@ -262,6 +276,7 @@ def fwd_gmail_msg(msg_id, addresses):
 # Adding commands to the group
 chatgmailcli.add_command(list_gmail_labels)
 chatgmailcli.add_command(list_gmail_subject_msgs)
+chatgmailcli.add_command(list_gmail_sub_menu_msgs)
 chatgmailcli.add_command(nav_q_msgs)
 chatgmailcli.add_command(fwd_gmail_msg)
 chatgmailcli.add_command(check_gmail_msg)
