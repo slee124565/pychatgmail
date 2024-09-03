@@ -15,6 +15,7 @@ PROCESSED_MSG_FOLDER = os.getenv('GMAIL_MSG_FOLDER', '.processed')
 DIGEST_MSG_FOLDER = os.getenv('GMAIL_MSG_FOLDER', '.mdigest')
 DIGEST2_MSG_FOLDER = os.getenv('GMAIL_MSG_FOLDER', '.m2digest')
 MSG_QUERY_SUBJECT = os.getenv('MSG_QUERY_SUBJECT', '')
+MSG_QUERY_SUB_OPTIONS = os.getenv('MSG_QUERY_SUB_OPTIONS', '104應徵履歷,透過104轉寄履歷')
 MSG_QUERY_DAYS = os.getenv('MSG_QUERY_DAYS', 1)
 MSG_QUERY_LABELS = os.getenv('MSG_QUERY_LABELS', 'INBOX')
 MSG_QUERY_CACHE_FILE = '.q'
@@ -52,7 +53,7 @@ def list_gmail_labels():
         click.echo(f'ID: {label.get("id")}, NAME: {label.get("name")}, TYPE: {label.get("type")}')
 
 
-@click.command(name='group-label-sub')
+@click.command(name='group-m-subject')
 @click.option('-d', '--query_offset_days', default=MSG_QUERY_DAYS, type=int,
               help='Gmail query after timedelta days.')
 @click.option('-l', '--gmail_label_ids', default=MSG_QUERY_LABELS, help='Gmail label IDs.')
@@ -60,6 +61,21 @@ def group_gmail_subject_digest(query_offset_days, gmail_lable_ids):
     """todo: Group Gmail messages subject digest( `】`) as data set"""
     click.echo(f'Group Gmail messages in `{gmail_lable_ids}` subject digest( `】`) as data set')
     raise NotImplementedError
+
+
+@click.command(name='list-mail-menu')
+@click.option('-s', '--query_menu', default=MSG_QUERY_SUB_OPTIONS, help='Gmail query subject match string.')
+@click.option('-d', '--query_offset_days', default=MSG_QUERY_DAYS, type=int,
+              help='Gmail query after timedelta days.')
+@click.option('-l', '--gmail_label_ids', default=MSG_QUERY_LABELS, help='Gmail label IDs.')
+def list_gmail_sub_menu_msgs(query_menu: str, query_offset_days: int, gmail_label_ids:str):
+    """
+    todo: List Gmail messages based on subject menu and offset-days.
+    """
+    click.echo(
+        f'Listing Gmail messages with sub: {query_menu} and days: {query_offset_days}, labels: {gmail_label_ids}...')
+
+
 
 @click.command(name='list-mail')
 @click.option('-s', '--query_subject', default=MSG_QUERY_SUBJECT, help='Gmail query subject match string.')
