@@ -23,19 +23,6 @@ SCOPES = [
 ]
 
 
-def get_msg_cache_html_file_by_id(msg_id: str) -> str:
-    return os.path.join('.gmail', f'{msg_id}.html')
-
-
-def read_msg_from_cache(msg_id: str) -> str:
-    """
-    Read the email message from cache file.
-    """
-    cache_file = get_msg_cache_html_file_by_id(msg_id=msg_id)
-    with open(cache_file, 'r', encoding='utf-8') as file:
-        return file.read()
-
-
 class MailInbox(abc.ABC):
 
     @abc.abstractmethod

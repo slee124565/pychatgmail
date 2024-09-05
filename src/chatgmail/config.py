@@ -4,7 +4,15 @@ import dotenv
 dotenv.load_dotenv()
 
 
-def get_gcp_credentials_file():
+def get_gmail_msg_transfer_folder() -> str:
+    return os.getenv('GMAIL_MSG_TRANSFER_FOLDER', '.markdown')
+
+
+def get_gmail_msg_saved_folder() -> str:
+    return os.getenv('GMAIL_MSG_SAVED_FOLDER', '.gmail')
+
+
+def get_gcp_credentials_file() -> str:
     """GCP project OAuth client desktop app credentials file."""
     return os.getenv('GCP_CREDENTIALS_FILE', 'credentials.json')
 

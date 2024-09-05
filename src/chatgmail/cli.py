@@ -10,16 +10,27 @@ from chatgmail.adapters import gmail, orm
 
 dotenv.load_dotenv()
 logging_config.dictConfig(config.logging_config)
-GMAIL_MSG_FOLDER = os.getenv('GMAIL_MSG_FOLDER', '.gmail')
-PROCESSED_MSG_FOLDER = os.getenv('GMAIL_MSG_FOLDER', '.processed')
-DIGEST_MSG_FOLDER = os.getenv('GMAIL_MSG_FOLDER', '.mdigest')
-DIGEST2_MSG_FOLDER = os.getenv('GMAIL_MSG_FOLDER', '.m2digest')
+GMAIL_MSG_FOLDER = config.get_gmail_msg_saved_folder()
+GMAIL_MSG_TRANSFER_FOLDER = config.get_gmail_msg_transfer_folder()
 MSG_QUERY_SUBJECT = os.getenv('MSG_QUERY_SUBJECT', '')
 MSG_QUERY_SUB_OPTIONS = os.getenv('MSG_QUERY_SUB_OPTIONS', '104應徵履歷,透過104轉寄履歷')
 MSG_QUERY_DAYS = os.getenv('MSG_QUERY_DAYS', 1)
 MSG_QUERY_LABELS = os.getenv('MSG_QUERY_LABELS', 'INBOX')
 MSG_QUERY_CACHE_FILE = '.q'
 CANDIDATES_CACHED_FILE = '.candidates'
+
+
+def read_msg_from_cache(msg_id: str) -> str:
+    """
+    Read the email message from cache file.
+    """
+    cache_file = get_msg_cache_html_file_by_id(msg_id=msg_id)
+    with open(cache_file, 'r', encoding='utf-8') as file:
+        return file.read()
+
+
+def get_msg_cache_html_file_by_id(msg_id: str) -> str:
+    return os.path.join(GMAIL_MSG_FOLDER, f'{msg_id}.html')
 
 
 @click.group()
@@ -53,14 +64,24 @@ def list_gmail_labels():
         click.echo(f'ID: {label.get("id")}, NAME: {label.get("name")}, TYPE: {label.get("type")}')
 
 
-@click.command(name='group-m-subject')
+@click.command(name='group-sub')
 @click.option('-d', '--query_offset_days', default=MSG_QUERY_DAYS, type=int,
               help='Gmail query after timedelta days.')
 @click.option('-l', '--gmail_label_ids', default=MSG_QUERY_LABELS, help='Gmail label IDs.')
-def group_gmail_subject_digest(query_offset_days, gmail_lable_ids):
-    """todo: Group Gmail messages subject digest( `】`) as data set"""
-    click.echo(f'Group Gmail messages in `{gmail_lable_ids}` subject digest( `】`) as data set')
-    raise NotImplementedError
+def group_gmail_subject_digest(query_offset_days, gmail_label_ids):
+    """Group Gmail messages subject digest( `】`) as data list"""
+    click.echo(f'Gmail subject set in `{gmail_label_ids}` digest by  `】`')
+    msgs = list_gmail_subject_msgs.callback('*', query_offset_days, gmail_label_ids)
+    # click.echo(f'{msgs}')
+    _subjects = set()
+    for _, _subject, _, _ in msgs:
+        n = str(_subject).find('】')
+        if n > 0:
+            _subjects.add(str(_subject)[:n + 1])
+        else:
+            pass
+    for _s in sorted(_subjects):
+        click.echo(f'{_s}')
 
 
 @click.command(name='list-mail-menu')
@@ -70,7 +91,7 @@ def group_gmail_subject_digest(query_offset_days, gmail_lable_ids):
 @click.option('-l', '--gmail_label_ids', default=MSG_QUERY_LABELS, help='Gmail label IDs.')
 def list_gmail_sub_menu_msgs(query_menu: str, query_offset_days: int, gmail_label_ids: str):
     """
-    todo: List Gmail messages based on subject menu and offset-days.
+    List Gmail messages based on subject menu and offset-days.
     """
     _options = query_menu.split(',')
     if not len(_options):
@@ -82,7 +103,7 @@ def list_gmail_sub_menu_msgs(query_menu: str, query_offset_days: int, gmail_labe
         click.echo(f'press <enter> to exit')
         choice = click.prompt(f'choice? 1-{len(_options)}', default='')
         if f'{choice}'.isdigit() and 0 < int(choice) <= len(_options):
-            _subject = _options[int(choice)-1]
+            _subject = _options[int(choice) - 1]
             list_gmail_subject_msgs.callback(_subject, query_offset_days, gmail_label_ids)
         elif choice == '':
             break
@@ -125,6 +146,7 @@ def list_gmail_subject_msgs(query_subject, query_offset_days, gmail_label_ids):
         click.echo(f'total: {len(msgs)}')
     else:
         click.echo('No matched messages found.')
+    return msgs
 
 
 @click.command(name='check-mail')
@@ -133,31 +155,19 @@ def check_gmail_msg(msg_id):
     """
     Check the content of specified email message html format.
     """
-    msg_html = gmail.read_msg_from_cache(msg_id)
+    msg_html = read_msg_from_cache(msg_id)
     candidate = orm.candidate_mapper(msg_id, msg_html)
     click.echo(f'{msg_id}|{candidate.validate()}|{candidate}')
     # click.echo(f'{json.dumps(candidate.digest(), indent=2, ensure_ascii=False, default=str)}')
     candidate_md = candidate.to_markdown()
     click.echo(candidate_md)
-    if not os.path.exists(PROCESSED_MSG_FOLDER):
-        os.makedirs(PROCESSED_MSG_FOLDER)
 
-    if not os.path.exists(DIGEST_MSG_FOLDER):
-        os.makedirs(DIGEST_MSG_FOLDER)
-    _file = f'./{DIGEST_MSG_FOLDER}/{msg_id}.md'
+    if not os.path.exists(GMAIL_MSG_TRANSFER_FOLDER):
+        os.makedirs(GMAIL_MSG_TRANSFER_FOLDER)
+
+    _file = f'./{GMAIL_MSG_TRANSFER_FOLDER}/{msg_id}.md'
     with open(_file, 'w', encoding='utf-8') as file:
         file.write(candidate_md)
-
-    if not os.path.exists(DIGEST2_MSG_FOLDER):
-        os.makedirs(DIGEST2_MSG_FOLDER)
-    _file = f'./{DIGEST2_MSG_FOLDER}/{msg_id}-{candidate.msg_receive_date}-{candidate.name}.md'
-    # _file = os.path.join('./', DIGEST2_MSG_FOLDER, f'{msg_id}-{candidate.msg_receive_date}-{candidate.name}.md')
-    # with open(_file, 'w', encoding='utf-8') as file:
-    #     file.write(candidate_md)
-
-    # source_file = f'./{GMAIL_MSG_FOLDER}/{msg_id}.html'
-    # destination_folder = f'./{PROCESSED_MSG_FOLDER}'
-    # shutil.move(source_file, destination_folder)
 
 
 @click.command(name='check-all-mail', help='Check all the email messages in the cache folder.')
@@ -173,7 +183,7 @@ def check_gmail_msg_all(query_applied_job):
         # 检查文件扩展名是否为 .html
         if file_extension.lower() == '.html':
             msg_id = file_name
-            msg_html = gmail.read_msg_from_cache(msg_id)
+            msg_html = read_msg_from_cache(msg_id)
             candidate = orm.candidate_mapper(msg_id, msg_html)
             if query_applied_job:
                 if candidate.applied_position.find(query_applied_job) == -1:
@@ -189,7 +199,7 @@ def check_gmail_msg_all(query_applied_job):
 
 
 def _print_candidate_digest(msg_id: str):
-    msg_html = gmail.read_msg_from_cache(msg_id)
+    msg_html = read_msg_from_cache(msg_id)
     candidate = orm.candidate_mapper(msg_id, msg_html)
     click.clear()
     click.echo(json.dumps(candidate.digest(), indent=2, ensure_ascii=False))
@@ -245,7 +255,7 @@ def nav_q_msgs():
             else:
                 click.echo(f'Digit number invalid')
         elif choice == 'o':
-            _html_file = gmail.get_msg_cache_html_file_by_id(msg_id)
+            _html_file = get_msg_cache_html_file_by_id(msg_id)
             if platform.system() == 'Windows':
                 subprocess.run(['start', _html_file], shell=True)
             elif platform.system() == 'Darwin':  # macOS
@@ -277,10 +287,11 @@ def fwd_gmail_msg(msg_id, addresses):
 chatgmailcli.add_command(list_gmail_labels)
 chatgmailcli.add_command(list_gmail_subject_msgs)
 chatgmailcli.add_command(list_gmail_sub_menu_msgs)
+chatgmailcli.add_command(group_gmail_subject_digest)
 chatgmailcli.add_command(nav_q_msgs)
 chatgmailcli.add_command(fwd_gmail_msg)
 chatgmailcli.add_command(check_gmail_msg)
-chatgmailcli.add_command(check_gmail_msg_all)
+# chatgmailcli.add_command(check_gmail_msg_all)
 
 if __name__ == '__main__':
     chatgmailcli()

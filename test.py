@@ -1,5 +1,7 @@
 import click
 import logging.config as logging_config
+
+import chatgmail.cli
 from chatgmail import config
 from chatgmail.adapters import gmail
 from chatgmail.adapters import orm
@@ -14,7 +16,7 @@ logging_config.dictConfig(config.logging_config)
 # print(f'{candidate}')
 
 def check_msg(msg_id: str):
-    msg_html = gmail.read_msg_from_cache(msg_id)
+    msg_html = chatgmail.cli.read_msg_from_cache(msg_id)
     candidate = orm.candidate_mapper(msg_id, msg_html)
     click.echo(f'{msg_id}|{candidate.validate()}|{candidate}')
     # click.echo(f'{json.dumps(candidate.digest(), indent=2, ensure_ascii=False, default=str)}')

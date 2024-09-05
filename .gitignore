@@ -133,7 +133,7 @@ credentials.json
 token.json
 .gmail/
 .processed/
-.mdigest/
+.markdown/
 .q
 .candidates
 *.log.*
