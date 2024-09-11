@@ -116,12 +116,14 @@ def list_gmail_sub_menu_msgs(query_menu: str, query_offset_days: int, gmail_labe
 @click.option('-d', '--query_offset_days', default=MSG_QUERY_DAYS, type=int,
               help='Gmail query after timedelta days.')
 @click.option('-l', '--gmail_label_ids', default=MSG_QUERY_LABELS, help='Gmail label IDs.')
-def list_gmail_subject_msgs(query_subject, query_offset_days, gmail_label_ids):
+@click.option('--msg-id-only', is_flag=True, help='Output Gmail MSG ID List Only')
+def list_gmail_subject_msgs(query_subject, query_offset_days, gmail_label_ids, msg_id_only=False):
     """
     List Gmail messages based on subject and offset-days.
     """
-    click.echo(
-        f'Listing Gmail messages with sub: {query_subject} and days: {query_offset_days}, labels: {gmail_label_ids}...')
+    if not msg_id_only:
+        click.echo(
+            f'Listing Gmail messages with sub: {query_subject} and days: {query_offset_days}, labels: {gmail_label_ids}...')
     gmail_inbox = gmail.GmailInbox()
     labels = gmail_inbox.list_labels()
     _ids = set()
@@ -139,13 +141,18 @@ def list_gmail_subject_msgs(query_subject, query_offset_days, gmail_label_ids):
     with open(MSG_QUERY_CACHE_FILE, 'w') as fh:
         fh.write(json.dumps(msgs, indent=2, ensure_ascii=False))
     if msgs:
-        click.clear()
-        for msg in msgs:
-            click.echo(msg)
-        click.echo('=====')
-        click.echo(f'total: {len(msgs)}')
+        if msg_id_only:
+            for msg in msgs:
+                click.echo(msg[0])
+        else:
+            click.clear()
+            for msg in msgs:
+                click.echo(msg)
+            click.echo('=====')
+            click.echo(f'total: {len(msgs)}')
     else:
-        click.echo('No matched messages found.')
+        if not msg_id_only:
+            click.echo('No matched messages found.')
     return msgs
 
 

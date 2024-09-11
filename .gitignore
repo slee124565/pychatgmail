@@ -134,6 +134,7 @@ token.json
 .gmail/
 .processed/
 .markdown/
+.llm/
 .q
 .candidates
 *.log.*
