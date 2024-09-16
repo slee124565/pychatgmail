@@ -144,16 +144,18 @@ def list_gmail_subject_msgs(query_subject, query_offset_days, gmail_label_ids, m
         if msg_id_only:
             for msg in msgs:
                 click.echo(msg[0])
+            return [msg[0] for msg in msgs]
         else:
             click.clear()
             for msg in msgs:
                 click.echo(msg)
             click.echo('=====')
             click.echo(f'total: {len(msgs)}')
+            return msgs
     else:
         if not msg_id_only:
             click.echo('No matched messages found.')
-    return msgs
+        return []
 
 
 @click.command(name='check-mail')
@@ -175,6 +177,7 @@ def check_gmail_msg(msg_id):
     _file = f'./{GMAIL_MSG_TRANSFER_FOLDER}/{msg_id}.md'
     with open(_file, 'w', encoding='utf-8') as file:
         file.write(candidate_md)
+    return candidate
 
 
 @click.command(name='check-all-mail', help='Check all the email messages in the cache folder.')
