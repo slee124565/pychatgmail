@@ -8,8 +8,8 @@ import logging.config as logging_config
 from chatgmail import cli, config
 from chatgmail.adapters import slack
 
-dotenv.load_dotenv()
 logging_config.dictConfig(config.logging_config)
+dotenv.load_dotenv()
 logger = logging.getLogger(__name__)
 LLM_ANALYZED_FOLDER = os.getenv('LLM_ANALYZED_FOLDER', '.analyzed')
 
@@ -28,7 +28,7 @@ def main(subject: str, days: int = 1, labels: str = 'Resume'):
 
         _file = f'./{LLM_ANALYZED_FOLDER}/{msg_id}.txt'
         if os.path.exists(_file):
-            logger.debug(f'candidate {candidate.job_104_code} {candidate.name} already analyzed, skip')
+            logger.info(f'candidate {candidate.job_104_code} {candidate.name} already analyzed, skip')
             continue
 
         response = llm_model.prompt(
@@ -36,18 +36,20 @@ def main(subject: str, days: int = 1, labels: str = 'Resume'):
             system=llm_system,
             stream=False
         ).text()
+
         if not os.path.exists(LLM_ANALYZED_FOLDER):
             os.makedirs(LLM_ANALYZED_FOLDER)
+            logger.info(f'create folder: {LLM_ANALYZED_FOLDER}')
 
         with open(_file, 'w', encoding='utf-8') as file:
             file.write(response)
+            logger.info(f'candidate {candidate.job_104_code} {candidate.name} analyzed and saved {_file}')
 
         _digest = json.dumps(candidate.digest(), indent=2, ensure_ascii=False)
         if f'{response}'.find('True') >= 0:
             notify = (f'HR-AI Notify: {candidate.name}, {candidate.job_104_code}, '
                       f'\napply:[{candidate.applied_position}], \nprefer:[{candidate.preferred_position}]'
                       f'\n<<< LLM Analysis\n{response}\n>>>\n')
-            logger.info(f'pass notify: {notify}')
             if ch_webhook:
                 slack.send_slack_message(ch_webhook=ch_webhook, msg=notify)
             if fwd_addresses:
