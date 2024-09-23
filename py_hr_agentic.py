@@ -23,7 +23,7 @@ def main(subject: str, days: int = 1, labels: str = 'Resume'):
     with open('py_hr_prompt.txt', 'r') as fh:
         llm_system = fh.read()
 
-    for msg_id in msg_ids[:]:
+    for msg_id in msg_ids[:15]:
         candidate = cli.check_gmail_msg.callback(msg_id)
 
         _file = f'./{LLM_ANALYZED_FOLDER}/{msg_id}.txt'
@@ -54,13 +54,13 @@ def main(subject: str, days: int = 1, labels: str = 'Resume'):
                 slack.send_slack_message(ch_webhook=ch_webhook, msg=notify)
             if fwd_addresses:
                 cli.fwd_gmail_msg.callback(msg_id, fwd_addresses)
-            break
+            # break
         else:
             logger.debug(f'HR-AI skip candidate: {candidate.digest()}')
 
 
 if __name__ == '__main__':
-    # main(subject='104應徵履歷【軟體工程師】')
+    main(subject='104應徵履歷【軟體工程師】')
     main(subject='104自訂配對人選【軟體工程師】')
-    # main(subject='104應徵履歷【雲端軟體工程師】')
-    # main(subject='104自訂配對人選【雲端軟體工程師】')
+    main(subject='104應徵履歷【雲端軟體工程師】')
+    main(subject='104自訂配對人選【雲端軟體工程師】')
