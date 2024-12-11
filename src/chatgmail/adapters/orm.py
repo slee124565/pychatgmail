@@ -174,7 +174,7 @@ def _xpath_string_mapping(dom: etree.HTML, xpath: str) -> str:
         value = inner_text if inner_text else ''
     else:
         value = ''
-    return value.replace('\n', '').strip()
+    return value.replace('\n', ' ').replace('\r', ' ').strip()
 
 
 def _soup_find_th_field_value(soup: bs4.BeautifulSoup, th_name: str) -> str:
@@ -185,7 +185,8 @@ def _soup_find_th_field_value(soup: bs4.BeautifulSoup, th_name: str) -> str:
         return ''
 
 
-def candidate_mapper(msg_id: str, resume_104_html: str) -> model.Candidate:
+def \
+        candidate_mapper(msg_id: str, resume_104_html: str) -> model.Candidate:
     """
     Map the 104 job application resume HTML to Candidate object.
     """
@@ -228,7 +229,8 @@ def candidate_mapper(msg_id: str, resume_104_html: str) -> model.Candidate:
     else:
         _search_class = 'px-5 pt-0 pb-0 text-left'  # py-1 font-16 inline-block mb-width-492 vtop
         td_elements = soup.find_all("td", class_=_search_class)
-        _self_recommendation = td_elements[0].get_text().replace('\n', ' ') if len(td_elements) else ''
+        _self_recommendation = td_elements[0].get_text().replace('\n', ' ').replace('\r', ' ') if len(
+            td_elements) else ''
         _self_recommendation = f'{_title}:{_self_recommendation}'
         _msg_receive_date = ''
         _job_104_code = _xpath_string_mapping(dom, field_xpath_mapping['job_104_code_matched'])
