@@ -144,11 +144,18 @@ def list_gmail_subject_msgs(query_subject, query_offset_days, gmail_label_ids, m
         if msg_id_only:
             for msg in msgs:
                 click.echo(msg[0])
+
             return [msg[0] for msg in msgs]
         else:
             click.clear()
             for msg in msgs:
-                click.echo(msg)
+                msg_id, msg_subject, received_date, _ = msg
+                msg_html = read_msg_from_cache(msg_id)
+                candidate = orm.candidate_mapper(msg_id, msg_html)
+                click.echo([f'{received_date}',
+                            f'{msg_subject}',
+                            f'{candidate.job_104_code}',
+                            f'g:{msg_id}'])
             click.echo('=====')
             click.echo(f'total: {len(msgs)}')
             return msgs

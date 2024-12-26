@@ -233,7 +233,8 @@ class GmailInbox(MailInbox):
                 logger.error(f'error: {e}, {msg_id}, {msg_subject}')
                 continue
 
-        return msgs
+        return sorted(msgs, key=lambda x: (x[2], x[1]), reverse=True)
+        # return msgs
 
 
 if __name__ == '__main__':
