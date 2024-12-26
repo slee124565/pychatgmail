@@ -234,6 +234,8 @@ def nav_q_msgs():
     assert isinstance(_q, list)
     _n = 0
     msg_id, _, _, _ = _q[_n]
+    msg_html = read_msg_from_cache(msg_id)
+    candidate = orm.candidate_mapper(msg_id, msg_html)
     _print_candidate_digest(msg_id)
     while True:
         click.echo(f'===== {_n + 1}/{len(_q)} ====')
@@ -274,7 +276,7 @@ def nav_q_msgs():
                 subprocess.run(['xdg-open', _html_file])
         elif choice == 's':
             with open(CANDIDATES_CACHED_FILE, 'a', encoding='utf-8') as fh:
-                fh.write(f'{_q[_n]}\n')
+                fh.write(f'{_q[_n] + [candidate.job_104_code]}\n')
             click.echo(f'saved {_q[_n]} into {CANDIDATES_CACHED_FILE}')
         elif choice == '':
             break
@@ -289,8 +291,8 @@ def nav_q_msgs():
 def fwd_gmail_msg(msg_id, addresses):
     """Forward a Gmail message to specified email addresses."""
     gmail_inbox = gmail.GmailInbox()
-    fwd_msg_id = gmail_inbox.fwd_msg(msg_id, f'{addresses}'.split(','))
-    click.echo(f'msg_id {msg_id} forward to {addresses}, {fwd_msg_id}')
+    _ = gmail_inbox.fwd_msg(msg_id, f'{addresses}'.split(','))
+    click.echo(f'msg_id {msg_id} forward to {addresses}')
 
 
 # Adding commands to the group
