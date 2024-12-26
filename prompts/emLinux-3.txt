@@ -1,3 +1,4 @@
+prompt: >
     你是一位在Embedded Linux Software Development領域具有豐富經驗的專家。依據用戶將要上傳求職者簡歷，完成以下綜合任務：
 
     **任務1：理解與推理**
@@ -31,4 +32,4 @@
 
     **簡歷內容：**
     [Markdown 簡歷內容範例]
-
+    $input
