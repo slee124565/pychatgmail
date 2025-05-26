@@ -15,10 +15,6 @@ def read_files(files):
 
 
 long_description = read_files(['README.md'])
-
-with open('requirements.txt') as f:
-    install_requires = f.read().split('\n')
-
 setup(
     name=__title__,
     version=__version__,
@@ -35,11 +31,5 @@ setup(
     license="MIT",
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
-    install_requires=install_requires,
     python_requires='>=3.11',
-    entry_points={
-        "console_scripts": [
-            "chatgmail=chatgmail.cli:chatgmailcli",
-        ],
-    },
 )
