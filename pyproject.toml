@@ -22,13 +22,9 @@ dependencies = [
     "python-dotenv>=1.1.0",
     "pytz>=2025.2",
     "requests>=2.32.3",
+    "rich>=14.0.0",
     "tokenizers>=0.21.1",
 ]
-
-[project.scripts]
-chatgmail = "chatgmail.cli:chatgmailcli"
-
-[project]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -39,6 +35,8 @@ classifiers = [
 keywords = ["gmail", "gpt", "cli", "email", "chat"]
 urls = {Homepage = "https://github.com/slee124565/pychatgmail"}
 
+[project.scripts]
+chatgmail = "chatgmail.cli:chatgmailcli"
 
 [build-system]
 requires = ["setuptools>=45", "wheel"]

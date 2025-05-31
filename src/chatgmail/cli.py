@@ -5,11 +5,14 @@ import dotenv
 import subprocess
 import platform
 import logging.config as logging_config
+from rich.markdown import Markdown
+from rich.console import Console
 from chatgmail import config
 from chatgmail.adapters import gmail, orm
 
 dotenv.load_dotenv()
 logging_config.dictConfig(config.logging_config)
+console = Console()
 GMAIL_MSG_FOLDER = config.get_gmail_msg_saved_folder()
 GMAIL_MSG_TRANSFER_FOLDER = config.get_gmail_msg_transfer_folder()
 MSG_QUERY_SUBJECT = os.getenv('MSG_QUERY_SUBJECT', '')
@@ -18,6 +21,7 @@ MSG_QUERY_DAYS = os.getenv('MSG_QUERY_DAYS', 1)
 MSG_QUERY_LABELS = os.getenv('MSG_QUERY_LABELS', 'INBOX')
 MSG_QUERY_CACHE_FILE = '.q'
 CANDIDATES_CACHED_FILE = '.candidates'
+CANDIDATES_REVIEW_FILE = 'candidates.csv'
 
 
 def read_msg_from_cache(msg_id: str) -> str:
@@ -137,7 +141,10 @@ def list_gmail_subject_msgs(query_subject, query_offset_days, gmail_label_ids, m
     _ids = ','.join(map(str, _elements))
 
     # click.echo(f'{_ids}')
-    msgs = gmail_inbox.list_msg(subject=query_subject, offset_days=query_offset_days, label_ids=_ids)
+    msgs = gmail_inbox.list_msg(
+        subject=query_subject, 
+        offset_days=query_offset_days,
+        label_ids=_ids)
     with open(MSG_QUERY_CACHE_FILE, 'w') as fh:
         fh.write(json.dumps(msgs, indent=2, ensure_ascii=False))
     if msgs:
@@ -177,7 +184,8 @@ def check_gmail_msg(msg_id):
     # click.echo(f'{json.dumps(candidate.digest(), indent=2, ensure_ascii=False, default=str)}')
     candidate_md = candidate.to_markdown()
     click.echo(candidate_md)
-
+    # console.print(Markdown(candidate_md))
+    
     if not os.path.exists(GMAIL_MSG_TRANSFER_FOLDER):
         os.makedirs(GMAIL_MSG_TRANSFER_FOLDER)
 
@@ -246,16 +254,36 @@ def nav_q_msgs():
     _print_candidate_digest(msg_id)
     while True:
         click.echo(f'===== {_n + 1}/{len(_q)} ====')
-        click.echo(f'<n>: next msg')
-        click.echo(f'<p>: prev msg')
+        click.echo('<t,reason>: True with Reason')
+        click.echo('<f,reason>: False with Reason')
+        click.echo('<n>: next msg')
+        click.echo('<p>: prev msg')
         click.echo(f'<1>-<{len(_q)}>: jump msg')
-        click.echo(f'<d>: detail msg')
-        click.echo(f'<o>: open msg 104 html')
-        click.echo(f'<s>: save msg info')
-        click.echo(f'<enter> to exit')
+        click.echo('<d>: detail msg')
+        click.echo('<o>: open msg 104 html')
+        # click.echo('<s>: save msg info')
+        click.echo('<enter> to exit')
         choice = click.prompt('cmd ?', type=str, default='')
 
-        if choice == 'n':
+        if choice.startswith('t') and len(choice) > 2:
+            _reason = choice[2:]
+            # click.echo(f'** {msg_id} is True with reason: {_reason} **')
+            with open(CANDIDATES_REVIEW_FILE, 'a', encoding='utf-8') as fh:
+                # Convert list data to CSV format
+                _data = _q[_n] + [candidate.job_104_code] + [True, _reason]
+                csv_line = ','.join(f'"{str(item)}"' for item in _data)
+                fh.write(f'{csv_line}\n')
+            click.echo(f'saved candatate data {_data}')
+        elif choice.startswith('f') and len(choice) > 2:
+            _reason = choice[2:]
+            # click.echo(f'** {msg_id} is False with reason: {_reason} **')
+            with open(CANDIDATES_REVIEW_FILE, 'a', encoding='utf-8') as fh:
+                # Convert list data to CSV format
+                _data = _q[_n] + [candidate.job_104_code] + [False, _reason]
+                csv_line = ','.join(f'"{str(item)}"' for item in _data)
+                fh.write(f'{csv_line}\n')
+            click.echo(f'saved candatate data {_data}')
+        elif choice == 'n':
             _n = 0 if _n + 1 >= len(_q) else _n + 1
             msg_id, _, _, _ = _q[_n]
             _print_candidate_digest(msg_id)
@@ -272,7 +300,7 @@ def nav_q_msgs():
                 msg_id, _, _, _ = _q[_n]
                 _print_candidate_digest(msg_id)
             else:
-                click.echo(f'Digit number invalid')
+                click.echo('Digit number invalid')
         elif choice == 'o':
             _html_file = get_msg_cache_html_file_by_id(msg_id)
             if platform.system() == 'Windows':
@@ -281,14 +309,14 @@ def nav_q_msgs():
                 subprocess.run(['open', _html_file])
             else:  # Linux
                 subprocess.run(['xdg-open', _html_file])
-        elif choice == 's':
-            with open(CANDIDATES_CACHED_FILE, 'a', encoding='utf-8') as fh:
-                fh.write(f'{_q[_n] + [candidate.job_104_code]}\n')
-            click.echo(f'saved {_q[_n]} into {CANDIDATES_CACHED_FILE}')
+        # elif choice == 's':
+        #     with open(CANDIDATES_CACHED_FILE, 'a', encoding='utf-8') as fh:
+        #         fh.write(f'{_q[_n] + [candidate.job_104_code]}\n')
+        #     click.echo(f'saved {_q[_n]} into {CANDIDATES_CACHED_FILE}')
         elif choice == '':
             break
         else:
-            click.echo('Invalid cmd')
+            click.echo(f'Invalid cmd {choice}, {len(choice)}')
             pass
 
 
